@@ -1,0 +1,1376 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>筋トレログ</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="筋トレログ">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#e9eee9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b2220" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: same look as ストレッチループ. One column, each tab scrolls on its own, tab bar at the bottom, edits open as bottom sheets. */
+:root {
+  --bg: #e9eee9;
+  --surface: #f6f8f4;
+  --surface-2: #dfe6e0;
+  --fg: #2e3934;
+  --muted: #6c7a73;
+  --track: #d3dcd5;
+  --lap-1: #6f9f88;
+  --lap-2: #7c9cb6;
+  --lap-3: #a093bd;
+  --lap-4: #c4a174;
+  --lap-5: #c48a8a;
+  --lap-6: #7fa9a6;
+  --danger: #b0635b;
+  --heat: #d2483c;
+  --body-base: #ffffff;
+  --body-line: #c9d3cc;
+  --scrim: rgba(20, 30, 25, .35);
+  --shadow: 0 10px 30px rgba(46, 70, 58, .12);
+  --font-ui: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif;
+  --font-num: "Nunito", "Zen Maru Gothic", "Hiragino Maru Gothic ProN", sans-serif;
+  --radius: 22px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b2220; --surface: #242d2a; --surface-2: #2e3935; --fg: #e2e9e4; --muted: #94a39b; --track: #33403b;
+    --lap-1: #86b8a0; --lap-2: #92b2cc; --lap-3: #b5a9d2; --lap-4: #d6b48a; --lap-5: #d69e9e; --lap-6: #92beba;
+    --danger: #e0968e; --scrim: rgba(0, 0, 0, .5);
+    --heat: #e8574a; --body-base: #3a4641; --body-line: #4b5852;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b2220; --surface: #242d2a; --surface-2: #2e3935; --fg: #e2e9e4; --muted: #94a39b; --track: #33403b;
+  --lap-1: #86b8a0; --lap-2: #92b2cc; --lap-3: #b5a9d2; --lap-4: #d6b48a; --lap-5: #d69e9e; --lap-6: #92beba;
+  --danger: #e0968e; --scrim: rgba(0, 0, 0, .5);
+  --heat: #e8574a; --body-base: #3a4641; --body-line: #4b5852;
+  --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overflow: hidden;
+}
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:focus-within {
+  outline: 3px solid var(--lap-1);
+  outline-offset: 2px;
+}
+[hidden] { display: none !important; }
+
+.app {
+  height: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.view {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-inline: 16px;
+  padding-block: 12px 28px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.view-timer { padding: 0; overflow: hidden; }
+.view-timer iframe { flex: 1; width: 100%; border: 0; display: block; background: var(--bg); }
+
+/* Header */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.brand-wrap { display: flex; flex-direction: column; min-width: 0; }
+.brand { font-weight: 700; font-size: 16px; letter-spacing: .04em; white-space: nowrap; }
+.sub { color: var(--muted); font-size: 13px; font-weight: 600; font-family: var(--font-num), var(--font-ui); }
+
+.icon-btn {
+  width: 44px; height: 44px; flex-shrink: 0;
+  border: none; border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  display: grid; place-items: center;
+}
+.icon-btn svg { width: 22px; height: 22px; stroke: var(--fg); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.icon-btn:active, .btn:active { transform: scale(.97); }
+
+.btn {
+  flex: 1;
+  min-height: 52px;
+  border: none; border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  font-weight: 700; font-size: 15px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 0 18px;
+}
+.btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.btn.done { background: var(--lap-1); color: var(--bg); box-shadow: none; }
+.btn:disabled { opacity: .45; cursor: default; }
+.chip-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 36px; padding: 0 14px;
+  border: none; border-radius: 999px;
+  background: var(--surface-2);
+  font-weight: 700; font-size: 13px;
+  white-space: nowrap;
+}
+.chip-btn .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.chip-btn[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.link-btn {
+  border: none; background: none; padding: 6px 0;
+  font-size: 13px; font-weight: 700; color: var(--muted);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.add {
+  border: 2px dashed var(--track);
+  background: transparent;
+  border-radius: var(--radius);
+  min-height: 52px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 12px 14px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.card h3 { margin: 0; font-size: 15px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--c, var(--lap-1)); flex-shrink: 0; }
+.tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11px; font-weight: 700;
+  vertical-align: 1px;
+}
+.empty { margin: 0; padding: 18px 8px; text-align: center; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.del {
+  width: 36px; height: 36px;
+  border: none; border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+.del svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+.del:disabled { opacity: .25; cursor: default; }
+.confirm-del {
+  border: none; border-radius: 999px;
+  min-height: 36px; padding: 0 12px;
+  background: transparent; color: var(--muted);
+  font-weight: 700; font-size: 13px;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.confirm-del svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+.confirm-del.armed { background: var(--danger); color: var(--bg); }
+
+/* Inputs */
+.num-input, .text-input, .memo {
+  width: 100%;
+  box-sizing: border-box;
+  border: 2px solid var(--surface-2);
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--fg);
+}
+.num-input {
+  height: 40px; min-width: 0;
+  text-align: center;
+  font-family: var(--font-num); font-weight: 800; font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  padding: 0 4px;
+}
+.num-input::placeholder { color: var(--muted); opacity: .55; font-weight: 700; }
+.text-input { height: 44px; padding: 0 12px; font-size: 16px; }
+.memo { padding: 8px 12px; font-size: 14px; line-height: 1.6; resize: none; min-height: 40px; display: block; }
+.memo::placeholder, .text-input::placeholder { color: var(--muted); opacity: .7; }
+
+/* Record tab */
+.datebar { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 10px; }
+.date-pick {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center;
+  border-radius: 16px;
+  padding: 2px 0;
+}
+.date-pick b { font-size: 19px; letter-spacing: .02em; }
+.date-pick small { font-size: 12px; color: var(--muted); font-weight: 700; }
+.date-pick input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; border: 0; cursor: pointer; }
+.day-meta { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: -8px; }
+.day-meta:empty, .day-meta:has(.sub:empty) { display: none; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.wo-head { display: flex; align-items: center; gap: 10px; }
+.wo-title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.wo-title b { font-size: 16px; overflow-wrap: anywhere; }
+.wo-title small { font-size: 12px; color: var(--muted); font-weight: 700; }
+.prev {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin: -4px 0 0;
+  font-size: 12.5px; color: var(--muted);
+}
+.prev span { min-width: 0; font-family: var(--font-num), var(--font-ui); font-weight: 700; }
+.prev .link-btn { flex-shrink: 0; font-size: 12.5px; }
+.sets { display: flex; flex-direction: column; gap: 6px; }
+.set {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 6px;
+}
+.set-h span { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); }
+.set-h i { font-style: normal; font-size: 10px; margin-left: 2px; }
+.set .no { text-align: center; font-family: var(--font-num); font-weight: 800; color: var(--muted); font-size: 14px; }
+.add-set {
+  min-height: 40px;
+  border: none; border-radius: 999px;
+  background: var(--surface-2);
+  font-weight: 700; font-size: 13px;
+}
+.body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field > span { font-size: 13px; font-weight: 700; color: var(--muted); }
+.unit-input { position: relative; }
+.unit-input .num-input { height: 44px; padding-right: 30px; }
+.unit-input em {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-style: normal; font-size: 12px; font-weight: 700; color: var(--muted);
+  pointer-events: none;
+}
+
+/* Calendar tab */
+.cal-head { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 10px; }
+.cal-head h2 { margin: 0; text-align: center; font-size: 18px; font-family: var(--font-num), var(--font-ui); font-weight: 800; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.wd { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); padding-bottom: 2px; }
+.wd.sun { color: var(--lap-5); }
+.wd.sat { color: var(--lap-2); }
+.cday {
+  position: relative;
+  border: none; background: transparent;
+  border-radius: 14px;
+  min-height: 54px;
+  padding: 4px 0;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.cday .n {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--font-num); font-weight: 700; font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.cday.sun .n { color: var(--lap-5); }
+.cday.sat .n { color: var(--lap-2); }
+.cday.today .n { box-shadow: inset 0 0 0 2px var(--muted); }
+.cday.trained .n { background: var(--fg); color: var(--bg); font-weight: 800; }
+.cday .dots { display: flex; gap: 3px; height: 6px; }
+.cday .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+.cday.has-body::after {
+  content: "";
+  position: absolute; top: 4px; right: 4px;
+  width: 7px; height: 7px; border-radius: 2px;
+  background: var(--lap-4);
+}
+.cday:active { background: var(--surface-2); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); font-weight: 700; justify-content: center; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lg-train { width: 12px; height: 12px; border-radius: 50%; background: var(--fg); }
+.lg-body { width: 8px; height: 8px; border-radius: 2px; background: var(--lap-4); }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stats.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stat { background: var(--surface); border-radius: 18px; padding: 10px 8px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
+.stat b { font-family: var(--font-num); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; }
+.stat b small { font-size: 12px; margin-left: 2px; }
+.stat span { font-size: 11.5px; color: var(--muted); font-weight: 700; }
+
+/* Body tab */
+.bodymaps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.bodymap { background: var(--surface); border-radius: var(--radius); padding: 10px 6px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bodymap svg { width: 100%; max-width: 190px; height: auto; display: block; }
+.bodymap figcaption { font-size: 12px; font-weight: 700; color: var(--muted); }
+.bodymap [data-region] {
+  fill: var(--body-base);
+  fill: color-mix(in srgb, var(--heat) var(--h, 0%), var(--body-base));
+  stroke: var(--body-line);
+  stroke-width: 1.5;
+  cursor: pointer;
+  transition: fill .3s;
+}
+.bodymap .off { fill: var(--surface-2); stroke: var(--body-line); stroke-width: 1.5; }
+.heat-legend { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 12px; font-weight: 700; color: var(--muted); }
+.heat-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.heat-legend i { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--body-line); background: color-mix(in srgb, var(--heat) var(--h), var(--body-base)); }
+.part-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.part-row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; }
+.part-row b { font-size: 14px; }
+.part-row .when { font-size: 12.5px; color: var(--muted); font-weight: 700; font-family: var(--font-num), var(--font-ui); }
+.part-row .meter { grid-column: 2 / 4; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
+.part-row .meter span { display: block; height: 100%; width: var(--h); background: var(--heat); border-radius: 3px; }
+
+/* Day detail */
+.day-meta-line { margin: -6px 0 0; font-size: 13px; color: var(--muted); font-weight: 700; font-family: var(--font-num), var(--font-ui); }
+.day-wo { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: var(--surface); border-radius: 18px; }
+.day-wo-head { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.day-wo-head small { color: var(--muted); font-size: 12px; }
+.set-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.set-list li {
+  background: var(--bg); border-radius: 999px;
+  padding: 3px 10px;
+  font-family: var(--font-num), var(--font-ui); font-weight: 700; font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.note { margin: 0; font-size: 13px; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.body-line { display: flex; gap: 16px; font-family: var(--font-num), var(--font-ui); font-weight: 700; }
+.body-line span small { color: var(--muted); font-size: 12px; margin-right: 4px; }
+
+/* Menu tab */
+.cat-head { display: flex; align-items: center; gap: 10px; }
+.cat-head b { flex: 1; font-size: 16px; }
+.cat-head .count { color: var(--muted); font-family: var(--font-num); font-weight: 700; font-size: 13px; }
+.edit-btn {
+  width: 36px; height: 36px; border: none; border-radius: 50%;
+  background: var(--surface-2); display: grid; place-items: center;
+}
+.edit-btn svg { width: 16px; height: 16px; stroke: var(--fg); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.menu-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.menu-row {
+  width: 100%;
+  display: flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 0 12px;
+  border: none; border-radius: 14px;
+  background: var(--bg);
+  text-align: left;
+  font-weight: 700;
+}
+.menu-row .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.menu-row svg { width: 16px; height: 16px; stroke: var(--muted); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.add.sm { min-height: 40px; font-size: 13px; border-radius: 14px; }
+
+/* Data tab */
+.card p { margin: 0; font-size: 13.5px; line-height: 1.7; color: var(--muted); }
+.card .row-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.card .row-btns .btn { min-height: 46px; flex: 1 1 140px; }
+.file-label { position: relative; overflow: hidden; }
+.file-label input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.import-preview { background: var(--bg); border-radius: 16px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.import-preview b { font-size: 14px; }
+.copy-area { width: 100%; height: 120px; box-sizing: border-box; font-family: ui-monospace, Menlo, monospace; font-size: 11px; border: 2px solid var(--surface-2); border-radius: 14px; background: var(--bg); padding: 8px; }
+
+/* Tab bar */
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+  padding: 6px 8px 8px;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -6px 24px rgba(46, 70, 58, .08);
+  flex-shrink: 0;
+}
+.tab {
+  border: none; background: transparent;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 4px 0;
+  color: var(--muted);
+  font-size: 11px; font-weight: 700;
+}
+.tab .ic { width: 44px; height: 30px; border-radius: 999px; display: grid; place-items: center; transition: background .2s; }
+.tab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tab[aria-selected="true"] { color: var(--fg); }
+.tab[aria-selected="true"] .ic { background: var(--surface-2); }
+
+/* Sheet */
+.scrim {
+  position: fixed; inset: 0;
+  background: var(--scrim);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 10;
+}
+.sheet {
+  width: 100%;
+  max-width: 520px;
+  max-height: 88%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: var(--bg);
+  border-radius: 30px 30px 0 0;
+  padding-inline: 16px;
+  padding-block: 10px calc(18px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 14px;
+  animation: up .28s ease-out;
+}
+@keyframes up { from { transform: translateY(40px); opacity: .6; } to { transform: none; opacity: 1; } }
+.grab { width: 40px; height: 5px; border-radius: 3px; background: var(--track); margin: 0 auto; flex-shrink: 0; }
+.sheet h2 { margin: 0; font-size: 18px; text-wrap: balance; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sheet-actions { display: flex; gap: 10px; }
+.chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; margin-inline: -16px; padding-inline: 16px; scrollbar-width: none; }
+.chip-row::-webkit-scrollbar { display: none; }
+.chip-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
+.pick-list { display: flex; flex-direction: column; gap: 6px; }
+.pick-group { font-size: 12px; font-weight: 700; color: var(--muted); margin: 6px 0 0 4px; display: flex; align-items: center; gap: 6px; }
+.pick {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 50px; padding: 0 14px;
+  border: 2px solid transparent; border-radius: 16px;
+  background: var(--surface);
+  text-align: left; font-weight: 700;
+}
+.pick .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.pick .nm small { display: block; font-size: 11.5px; color: var(--muted); font-weight: 700; }
+.pick .check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--track); display: grid; place-items: center; flex-shrink: 0; }
+.pick .check svg { width: 14px; height: 14px; stroke: var(--bg); fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+.pick[aria-pressed="true"] { border-color: var(--c); }
+.pick[aria-pressed="true"] .check { background: var(--c); border-color: var(--c); }
+.pick[aria-pressed="true"] .check svg { opacity: 1; }
+.sheet-foot {
+  position: sticky;
+  bottom: calc(-18px - env(safe-area-inset-bottom, 0px));
+  background: var(--bg);
+  padding-block: 8px calc(18px + env(safe-area-inset-bottom, 0px));
+  margin-block: -6px calc(-18px - env(safe-area-inset-bottom, 0px));
+}
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); border-radius: 16px; padding: 10px 14px; }
+.switch-row span { font-weight: 700; display: flex; flex-direction: column; gap: 2px; }
+.switch-row small { font-size: 12px; color: var(--muted); font-weight: 500; line-height: 1.5; }
+.switch {
+  -webkit-appearance: none; appearance: none;
+  width: 50px; height: 30px; flex-shrink: 0;
+  border-radius: 999px; background: var(--track);
+  position: relative; margin: 0; cursor: pointer;
+  transition: background .2s;
+}
+.switch::before {
+  content: ""; position: absolute; top: 3px; left: 3px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--surface); box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+  transition: transform .2s;
+}
+.switch:checked { background: var(--lap-1); }
+.switch:checked::before { transform: translateX(20px); }
+.colors { display: flex; gap: 10px; flex-wrap: wrap; }
+.color-dot { width: 40px; height: 40px; border-radius: 50%; border: 3px solid transparent; background: var(--c); box-shadow: inset 0 0 0 3px var(--bg); }
+.color-dot[aria-pressed="true"] { border-color: var(--c); }
+.err { color: var(--danger); font-size: 13px; font-weight: 700; margin: -6px 0 0; }
+.hint { font-size: 12.5px; color: var(--muted); margin: -4px 0 0; line-height: 1.6; }
+.sheet-danger { display: flex; justify-content: center; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  background: var(--fg); color: var(--bg);
+  padding: 10px 18px; border-radius: 999px;
+  font-weight: 700; font-size: 14px;
+  z-index: 20; max-width: calc(100% - 48px); text-align: center;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 360px) {
+  .set { grid-template-columns: 18px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 30px; gap: 4px; }
+  .num-input { font-size: 15px; }
+  .tab .ic { width: 36px; }
+  .tab { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet { animation: none; }
+  .tab .ic, .switch, .switch::before { transition: none; }
+}
+</style>
+
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; height: 100%; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- 記録 -->
+  <section class="view" id="v-log" role="tabpanel" aria-labelledby="t-log">
+    <header class="top">
+      <div class="brand-wrap"><span class="brand">筋トレログ</span><span class="sub" id="logSub">今日の記録</span></div>
+      <button class="chip-btn" id="todayBtn" hidden>今日に戻る</button>
+    </header>
+    <div class="datebar">
+      <button class="icon-btn" id="prevDay" aria-label="前の日"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <label class="date-pick">
+        <b id="dateLabel"></b><small id="dateYear"></small>
+        <input type="date" id="dateInput" aria-label="日付を選ぶ">
+      </label>
+      <button class="icon-btn" id="nextDay" aria-label="次の日"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="day-meta">
+      <span class="sub" id="daySummary"></span>
+    </div>
+    <div class="stack" id="workouts"></div>
+    <button class="add" id="callBtn">＋ メニューを呼び出す</button>
+    <div class="card">
+      <h3>からだ・メモ</h3>
+      <div class="body-grid">
+        <label class="field"><span>体重</span><span class="unit-input"><input class="num-input" id="bw" type="text" inputmode="decimal" placeholder="0.0"><em>kg</em></span></label>
+        <label class="field"><span>体脂肪率</span><span class="unit-input"><input class="num-input" id="bf" type="text" inputmode="decimal" placeholder="0.0"><em>%</em></span></label>
+      </div>
+      <label class="field"><span>その日のメモ</span><textarea class="memo" id="dayMemo" rows="2" placeholder="朝食・体調など"></textarea></label>
+    </div>
+  </section>
+
+  <!-- 部位 -->
+  <section class="view" id="v-body" role="tabpanel" aria-labelledby="t-body" hidden>
+    <header class="top">
+      <div class="brand-wrap"><span class="brand">部位</span><span class="sub">鍛えた場所が赤くなり、3日で元に戻ります</span></div>
+    </header>
+    <!--
+      人体図(仮)。あとで自作の図に差し替える時は、<svg> の中身を入れ替えて、
+      色をつけたい形に data-region="chest" のように部位IDを付けるだけで動きます。
+      使える部位ID:shoulders chest biceps triceps forearms abs obliques traps lats lowerback glutes quads hamstrings calves
+      色をつけない形(頭・手など)は class="off" を付けてください。
+    -->
+    <div class="bodymaps">
+      <figure class="bodymap" style="margin:0">
+        <svg viewBox="0 0 160 360" role="img" aria-label="前面の図">
+          <ellipse class="off" cx="80" cy="30" rx="17" ry="21"/>
+          <rect class="off" x="72" y="50" width="16" height="14" rx="4"/>
+          <ellipse data-region="shoulders" cx="44" cy="78" rx="15" ry="13"/>
+          <ellipse data-region="shoulders" cx="116" cy="78" rx="15" ry="13"/>
+          <rect data-region="chest" x="56" y="68" width="23" height="38" rx="9"/>
+          <rect data-region="chest" x="81" y="68" width="23" height="38" rx="9"/>
+          <rect data-region="biceps" x="28" y="94" width="16" height="46" rx="8"/>
+          <rect data-region="biceps" x="116" y="94" width="16" height="46" rx="8"/>
+          <rect data-region="forearms" x="22" y="144" width="16" height="52" rx="8"/>
+          <rect data-region="forearms" x="122" y="144" width="16" height="52" rx="8"/>
+          <ellipse class="off" cx="29" cy="206" rx="8" ry="10"/>
+          <ellipse class="off" cx="131" cy="206" rx="8" ry="10"/>
+          <rect data-region="obliques" x="53" y="110" width="10" height="58" rx="5"/>
+          <rect data-region="obliques" x="97" y="110" width="10" height="58" rx="5"/>
+          <rect data-region="abs" x="65" y="110" width="30" height="62" rx="8"/>
+          <rect class="off" x="56" y="175" width="48" height="20" rx="8"/>
+          <rect data-region="quads" x="56" y="198" width="22" height="76" rx="10"/>
+          <rect data-region="quads" x="82" y="198" width="22" height="76" rx="10"/>
+          <rect data-region="calves" x="58" y="280" width="18" height="60" rx="8"/>
+          <rect data-region="calves" x="84" y="280" width="18" height="60" rx="8"/>
+          <ellipse class="off" cx="66" cy="348" rx="11" ry="6"/>
+          <ellipse class="off" cx="94" cy="348" rx="11" ry="6"/>
+        </svg>
+        <figcaption>前面</figcaption>
+      </figure>
+      <figure class="bodymap" style="margin:0">
+        <svg viewBox="0 0 160 360" role="img" aria-label="背面の図">
+          <ellipse class="off" cx="80" cy="30" rx="17" ry="21"/>
+          <rect class="off" x="72" y="50" width="16" height="12" rx="4"/>
+          <path data-region="traps" d="M64 60 H96 L108 76 L80 96 L52 76 Z"/>
+          <ellipse data-region="shoulders" cx="44" cy="78" rx="15" ry="13"/>
+          <ellipse data-region="shoulders" cx="116" cy="78" rx="15" ry="13"/>
+          <path data-region="lats" d="M56 84 L80 102 L104 84 L102 138 Q80 148 58 138 Z"/>
+          <rect data-region="lowerback" x="64" y="144" width="32" height="28" rx="8"/>
+          <rect data-region="triceps" x="28" y="94" width="16" height="46" rx="8"/>
+          <rect data-region="triceps" x="116" y="94" width="16" height="46" rx="8"/>
+          <rect data-region="forearms" x="22" y="144" width="16" height="52" rx="8"/>
+          <rect data-region="forearms" x="122" y="144" width="16" height="52" rx="8"/>
+          <ellipse class="off" cx="29" cy="206" rx="8" ry="10"/>
+          <ellipse class="off" cx="131" cy="206" rx="8" ry="10"/>
+          <rect data-region="glutes" x="56" y="175" width="23" height="34" rx="11"/>
+          <rect data-region="glutes" x="81" y="175" width="23" height="34" rx="11"/>
+          <rect data-region="hamstrings" x="56" y="212" width="22" height="62" rx="10"/>
+          <rect data-region="hamstrings" x="82" y="212" width="22" height="62" rx="10"/>
+          <rect data-region="calves" x="58" y="280" width="18" height="60" rx="9"/>
+          <rect data-region="calves" x="84" y="280" width="18" height="60" rx="9"/>
+          <ellipse class="off" cx="66" cy="348" rx="11" ry="6"/>
+          <ellipse class="off" cx="94" cy="348" rx="11" ry="6"/>
+        </svg>
+        <figcaption>背面</figcaption>
+      </figure>
+    </div>
+    <div class="heat-legend">
+      <span><i style="--h:100%"></i>今日</span>
+      <span><i style="--h:67%"></i>1日前</span>
+      <span><i style="--h:33%"></i>2日前</span>
+      <span><i style="--h:0%"></i>3日以上前</span>
+    </div>
+    <div class="card">
+      <h3>部位ごとの最終トレーニング</h3>
+      <ul class="part-list" id="partList"></ul>
+      <p class="hint" style="margin:0">図のどこを赤くするかは、メニュータブの部位の編集(鉛筆ボタン)で変えられます。</p>
+    </div>
+  </section>
+
+  <!-- カレンダー -->
+  <section class="view" id="v-cal" role="tabpanel" aria-labelledby="t-cal" hidden>
+    <header class="top">
+      <div class="brand-wrap"><span class="brand">カレンダー</span><span class="sub">日付をタップで振り返り</span></div>
+      <button class="chip-btn" id="calTodayBtn">今月</button>
+    </header>
+    <div class="cal-head">
+      <button class="icon-btn" id="prevMonth" aria-label="前の月"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <h2 id="calTitle"></h2>
+      <button class="icon-btn" id="nextMonth" aria-label="次の月"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="legend">
+      <span><i class="lg-train"></i>トレーニングした日</span>
+      <span><i class="lg-body"></i>体重・メモあり</span>
+      <span>下の点 = 鍛えた部位</span>
+    </div>
+    <div class="stats two" id="calStats"></div>
+  </section>
+
+  <!-- タイマー -->
+  <section class="view view-timer" id="v-timer" role="tabpanel" aria-labelledby="t-timer" hidden>
+    <iframe id="timerFrame" title="ストレッチループ" allow="screen-wake-lock; autoplay"></iframe>
+  </section>
+
+  <!-- メニュー -->
+  <section class="view" id="v-menu" role="tabpanel" aria-labelledby="t-menu" hidden>
+    <header class="top">
+      <div class="brand-wrap"><span class="brand">メニュー</span><span class="sub">部位ごとに登録</span></div>
+    </header>
+    <div class="stack" id="menuList"></div>
+    <button class="add" id="addCatBtn">＋ 部位を追加</button>
+  </section>
+
+  <!-- データ -->
+  <section class="view" id="v-data" role="tabpanel" aria-labelledby="t-data" hidden>
+    <header class="top">
+      <div class="brand-wrap"><span class="brand">データ</span><span class="sub">このブラウザに保存されています</span></div>
+    </header>
+    <div class="card">
+      <h3>書き出し</h3>
+      <p>記録をJSONファイルに保存します。機種変更やブラウザのデータ削除で記録が消えないよう、ときどき書き出しておいてください。</p>
+      <p id="lastExport"></p>
+      <div class="row-btns">
+        <button class="btn done" id="exportBtn"><svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>書き出す</button>
+        <button class="btn" id="copyBtn"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>テキストでコピー</button>
+      </div>
+      <textarea class="copy-area" id="copyArea" readonly hidden aria-label="書き出したJSON"></textarea>
+    </div>
+    <div class="card">
+      <h3>読み込み</h3>
+      <p>書き出したJSONファイルを選ぶと、今のデータと置き換えます。</p>
+      <div class="row-btns">
+        <label class="btn file-label"><svg viewBox="0 0 24 24"><path d="M12 20V9"/><path d="M7 14l5-5 5 5"/><path d="M5 4h14"/></svg>ファイルを選ぶ<input type="file" id="importFile" accept="application/json,.json"></label>
+      </div>
+      <div class="import-preview" id="importPreview" hidden></div>
+    </div>
+    <div class="stats" id="allStats"></div>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="画面の切り替え">
+    <button class="tab" role="tab" id="t-log" data-tab="log" aria-controls="v-log" aria-selected="true">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg></span>記録
+    </button>
+    <button class="tab" role="tab" id="t-body" data-tab="body" aria-controls="v-body" aria-selected="false">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2.5"/><path d="M5 9l7-1.5L19 9M12 7.5V14M8.5 21.5L12 14l3.5 7.5"/></svg></span>部位
+    </button>
+    <button class="tab" role="tab" id="t-cal" data-tab="cal" aria-controls="v-cal" aria-selected="false">
+      <span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>カレンダー
+    </button>
+    <button class="tab" role="tab" id="t-timer" data-tab="timer" aria-controls="v-timer" aria-selected="false">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2.5h4"/></svg></span>タイマー
+    </button>
+    <button class="tab" role="tab" id="t-menu" data-tab="menu" aria-controls="v-menu" aria-selected="false">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></span>メニュー
+    </button>
+    <button class="tab" role="tab" id="t-data" data-tab="data" aria-controls="v-data" aria-selected="false">
+      <span class="ic"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6"/><path d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/></svg></span>データ
+    </button>
+  </nav>
+</div>
+
+<div class="scrim" id="scrim" hidden>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+  const KEY = 'kintore-log-v1';
+  const COLORS = ['--lap-1', '--lap-2', '--lap-3', '--lap-4', '--lap-5', '--lap-6'];
+  const col = i => `var(${COLORS[((+i || 0) % 6 + 6) % 6]})`;
+  const $ = id => document.getElementById(id);
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const pad = n => String(n).padStart(2, '0');
+  const WD = '日月火水木金土';
+  const X_ICON = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const CHEV = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
+  const PENCIL = '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+  const CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  /* ---------- 日付:すべて端末のローカル時刻で "YYYY-MM-DD" を作る(UTC変換を使わないので日付がずれない) ---------- */
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const addDays = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d); };
+  const today = () => ymd(new Date());
+  const dayLabel = s => { const d = parseYmd(s); return `${d.getMonth() + 1}月${d.getDate()}日(${WD[d.getDay()]})`; };
+  const shortLabel = s => { const d = parseYmd(s); return `${d.getMonth() + 1}/${d.getDate()}`; };
+  const nowHM = () => { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+  const isYmd = s => /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function num(v) {
+    const s = String(v ?? '').replace(/[０-９．]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^\d.]/g, '');
+    if (s === '') return null;
+    const n = parseFloat(s);
+    return isFinite(n) ? n : null;
+  }
+  const fmtN = n => String(+(+n).toFixed(2));
+
+  /* ---------- データ ---------- */
+  function defaults() {
+    const cats = [['胸', 0], ['背中', 1], ['肩', 2], ['腕', 3], ['脚', 4], ['腹', 5]].map(([name, color]) => ({ id: uid(), name, color }));
+    const cid = n => cats.find(c => c.name === n).id;
+    const menus = [
+      ['ベンチプレス', '胸', false], ['腕立て伏せ', '胸', true],
+      ['ラットプルダウン', '背中', false], ['懸垂', '背中', true],
+      ['ショルダープレス', '肩', false], ['サイドレイズ', '肩', false],
+      ['アームカール', '腕', false], ['ディップス', '腕', true],
+      ['スクワット', '脚', false], ['レッグプレス', '脚', false],
+      ['クランチ', '腹', true], ['レッグレイズ', '腹', true]
+    ].map(([name, cat, bw]) => ({ id: uid(), name, catId: cid(cat), bw }));
+    return { version: 1, categories: cats, menus, days: {}, meta: {} };
+  }
+  /* 人体図の部位ID(SVGの data-region と対応) */
+  const REGIONS = [
+    ['shoulders', '肩'], ['chest', '胸'], ['biceps', '上腕二頭筋'], ['triceps', '上腕三頭筋'], ['forearms', '前腕'],
+    ['abs', '腹筋'], ['obliques', '脇腹'], ['traps', '僧帽筋'], ['lats', '背中'], ['lowerback', '腰'],
+    ['glutes', 'お尻'], ['quads', '太もも前'], ['hamstrings', '太もも裏'], ['calves', 'ふくらはぎ']
+  ];
+  const REGION_NAME = Object.fromEntries(REGIONS);
+  const NAME_REGIONS = {
+    '胸': ['chest'], '背中': ['lats', 'traps', 'lowerback'], '肩': ['shoulders'],
+    '腕': ['biceps', 'triceps', 'forearms'], '脚': ['quads', 'hamstrings', 'glutes', 'calves'], '腹': ['abs', 'obliques']
+  };
+  const FADE_DAYS = 3; // この日数で白に戻る
+  function migrate(v) {
+    v.meta = v.meta || {};
+    v.categories.forEach(c => { if (!Array.isArray(c.regions)) c.regions = (NAME_REGIONS[c.name] || []).slice(); });
+    return v;
+  }
+  const valid = v => v && typeof v === 'object' && Array.isArray(v.categories) && Array.isArray(v.menus) && v.days && typeof v.days === 'object';
+  function load() {
+    try { const v = JSON.parse(localStorage.getItem(KEY)); if (valid(v)) return migrate(v); } catch {}
+    return migrate(defaults());
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {} }
+  let data = load();
+  save();
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch {}
+
+  const emptySet = () => ({ weight: null, reps: null, assist: 0 });
+  function getDay(k, create) {
+    let d = data.days[k];
+    if (!d && create) d = data.days[k] = { start: '', workouts: [], body: { weight: null, fat: null, memo: '' } };
+    return d;
+  }
+  const hasBody = d => d && (d.body.weight != null || d.body.fat != null || (d.body.memo || '').trim());
+  const hasTrain = d => d && d.workouts.length > 0;
+  function cleanDay(k) {
+    const d = data.days[k];
+    if (d && !hasTrain(d) && !hasBody(d) && !d.start) delete data.days[k];
+  }
+  const filledSets = w => w.sets.filter(s => s.weight != null || s.reps != null);
+  function lastRecord(menuId, before) {
+    const keys = Object.keys(data.days).filter(k => k < before).sort().reverse();
+    for (const k of keys) {
+      const w = data.days[k].workouts.find(x => x.menuId === menuId && filledSets(x).length);
+      if (w) return { key: k, w };
+    }
+    return null;
+  }
+  function setText(s, bw) {
+    let wt;
+    if (bw) wt = s.weight ? `自重+${fmtN(s.weight)}kg` : '自重';
+    else wt = s.weight != null ? `${fmtN(s.weight)}kg` : '—';
+    const r = s.reps != null ? ` × ${fmtN(s.reps)}` : '';
+    const a = s.assist ? `(補助${fmtN(s.assist)}kg)` : '';
+    return wt + r + a;
+  }
+  const catOf = id => data.categories.find(c => c.id === id);
+  // 記録した種目がどの部位か(古い記録はメニュー→部位名の順にたどる)
+  function catOfWorkout(w) {
+    let c = w.catId && catOf(w.catId);
+    if (!c) { const m = data.menus.find(x => x.id === w.menuId); c = m && catOf(m.catId); }
+    if (!c) c = data.categories.find(x => x.name === w.cat);
+    return c || null;
+  }
+  const daysAgo = k => Math.round((parseYmd(today()) - parseYmd(k)) / 86400000);
+  const heatOf = k => (k == null ? 0 : Math.max(0, Math.min(1, (FADE_DAYS - daysAgo(k)) / FADE_DAYS)));
+  const agoText = k => { if (k == null) return '記録なし'; const n = daysAgo(k); return n === 0 ? '今日' : n === 1 ? '昨日' : `${n}日前(${shortLabel(k)})`; };
+  // 今日までで、部位(図のID)/部位カテゴリごとに最後にセットを記録した日
+  function lastTrained() {
+    const t = today(), regions = {}, cats = {};
+    Object.keys(data.days).forEach(k => {
+      if (k > t) return;
+      data.days[k].workouts.forEach(w => {
+        if (!filledSets(w).length) return;
+        const c = catOfWorkout(w); if (!c) return;
+        if (!cats[c.id] || k > cats[c.id]) cats[c.id] = k;
+        (c.regions || []).forEach(r => { if (!regions[r] || k > regions[r]) regions[r] = k; });
+      });
+    });
+    return { regions, cats };
+  }
+
+  /* ---------- 共通UI ---------- */
+  let toastTimer = 0;
+  function toast(text) {
+    const t = $('toast');
+    t.textContent = text; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, 2000);
+  }
+  const scrim = $('scrim'), sheet = $('sheet');
+  let onSheetClose = null;
+  function openSheet(html, after) {
+    sheet.innerHTML = '<div class="grab"></div>' + html;
+    scrim.hidden = false;
+    sheet.scrollTop = 0;
+    onSheetClose = null;
+    after && after(sheet);
+  }
+  function closeSheet() {
+    scrim.hidden = true;
+    sheet.innerHTML = '';
+    const f = onSheetClose; onSheetClose = null; f && f();
+  }
+  scrim.addEventListener('click', e => { if (e.target === scrim) closeSheet(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !scrim.hidden) closeSheet(); });
+
+  // 2回押しで削除するボタン
+  function armDelete(btn, label, action) {
+    let armed = false, t = 0;
+    const idle = btn.innerHTML;
+    btn.addEventListener('click', () => {
+      if (armed) { clearTimeout(t); action(); return; }
+      armed = true;
+      btn.classList.add('armed');
+      btn.textContent = label;
+      t = setTimeout(() => { armed = false; btn.classList.remove('armed'); btn.innerHTML = idle; }, 3000);
+    });
+  }
+  function autoGrow(ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 4 + 'px'; }
+
+  /* ---------- 記録タブ ---------- */
+  let cur = today();
+  let lastToday = today();
+
+  function renderLog() {
+    const t = today();
+    $('dateLabel').textContent = dayLabel(cur);
+    $('dateYear').textContent = cur.slice(0, 4) + '年';
+    $('dateInput').value = cur;
+    $('todayBtn').hidden = cur === t;
+    $('logSub').textContent = cur === t ? '今日の記録' : cur < t ? '過去の記録を編集中' : '先の日付を編集中';
+    const d = getDay(cur, false);
+    const n = d ? d.workouts.length : 0;
+    const sc = d ? d.workouts.reduce((a, w) => a + filledSets(w).length, 0) : 0;
+    $('daySummary').textContent = n ? `${n}種目・${sc}セット` : '';
+
+    const box = $('workouts');
+    box.innerHTML = '';
+    if (!n) box.innerHTML = '<p class="empty">まだメニューがありません。<br>下のボタンからやるメニューを呼び出してください。</p>';
+    else d.workouts.forEach((w, i) => box.appendChild(woCard(d, w, i)));
+
+    $('bw').value = d?.body.weight ?? '';
+    $('bf').value = d?.body.fat ?? '';
+    $('dayMemo').value = d?.body.memo || '';
+    autoGrow($('dayMemo'));
+  }
+
+  function woCard(day, w, wi) {
+    const el = document.createElement('article');
+    el.className = 'card';
+    el.style.setProperty('--c', col(w.color));
+    const prev = lastRecord(w.menuId, cur);
+    const prevSets = prev ? filledSets(prev.w) : [];
+    el.innerHTML = `
+      <div class="wo-head">
+        <span class="dot"></span>
+        <div class="wo-title"><b>${esc(w.name)}</b><small>${esc(w.cat)}${w.bw ? '・自重' : ''}</small></div>
+        <button class="confirm-del" data-act="delwo" aria-label="${esc(w.name)}を削除">${X_ICON}</button>
+      </div>
+      ${prev ? `<p class="prev"><span>前回 ${shortLabel(prev.key)}:${esc(prevSets.map(s => setText(s, prev.w.bw)).join('、'))}</span><button class="link-btn" data-act="copyprev">前回をコピー</button></p>` : ''}
+      <div class="sets">
+        <div class="set set-h"><span>#</span><span>${w.bw ? '加重' : '重さ'}<i>kg</i></span><span>回数</span><span>補助<i>kg</i></span><span></span></div>
+      </div>
+      <button class="add-set" data-act="addset">＋ セット追加</button>
+      <textarea class="memo" rows="1" placeholder="メモ(フォーム・感覚など)" aria-label="${esc(w.name)}のメモ"></textarea>`;
+
+    const setsBox = el.querySelector('.sets');
+    w.sets.forEach((s, i) => {
+      const ps = prevSets[i];
+      const r = document.createElement('div');
+      r.className = 'set';
+      r.innerHTML = `
+        <span class="no">${i + 1}</span>
+        <input class="num-input" data-f="weight" type="text" inputmode="decimal" value="${s.weight ?? ''}" placeholder="${ps && ps.weight != null ? fmtN(ps.weight) : (w.bw ? '自重' : '0')}" aria-label="${i + 1}セット目の${w.bw ? '加重' : '重さ'}">
+        <input class="num-input" data-f="reps" type="text" inputmode="numeric" value="${s.reps ?? ''}" placeholder="${ps && ps.reps != null ? fmtN(ps.reps) : '0'}" aria-label="${i + 1}セット目の回数">
+        <input class="num-input" data-f="assist" type="text" inputmode="decimal" value="${s.assist ? fmtN(s.assist) : '0'}" aria-label="${i + 1}セット目の補助の重さ">
+        <button class="del" data-act="delset" aria-label="${i + 1}セット目を削除" ${w.sets.length <= 1 ? 'disabled' : ''}>${X_ICON}</button>`;
+      r.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', () => {
+          const f = inp.dataset.f;
+          s[f] = f === 'assist' ? (num(inp.value) ?? 0) : num(inp.value);
+          save(); updateSummary();
+        });
+        inp.addEventListener('focus', () => inp.select());
+        inp.addEventListener('change', () => { if (inp.dataset.f === 'assist' && inp.value === '') inp.value = '0'; });
+      });
+      r.querySelector('[data-act="delset"]').onclick = () => { w.sets.splice(i, 1); save(); renderLog(); };
+      setsBox.appendChild(r);
+    });
+
+    el.querySelector('[data-act="addset"]').onclick = () => {
+      const last = w.sets[w.sets.length - 1];
+      w.sets.push(last ? { ...last } : emptySet());
+      save(); renderLog();
+      const rows = $('workouts').children[wi]?.querySelectorAll('.set:not(.set-h)');
+      rows && rows[rows.length - 1]?.querySelector('[data-f="reps"]')?.focus();
+    };
+    const cp = el.querySelector('[data-act="copyprev"]');
+    if (cp) cp.onclick = () => {
+      w.sets = prevSets.map(s => ({ weight: s.weight ?? null, reps: s.reps ?? null, assist: s.assist || 0 }));
+      save(); renderLog(); toast('前回の内容を入れました');
+    };
+    armDelete(el.querySelector('[data-act="delwo"]'), '削除する', () => {
+      day.workouts.splice(wi, 1);
+      if (!day.workouts.length) day.start = '';
+      cleanDay(cur); save(); renderLog();
+    });
+    const memo = el.querySelector('.memo');
+    memo.value = w.memo || '';
+    memo.addEventListener('input', () => { w.memo = memo.value; autoGrow(memo); save(); });
+    requestAnimationFrame(() => autoGrow(memo));
+    return el;
+  }
+  function updateSummary() {
+    const d = getDay(cur, false);
+    const n = d ? d.workouts.length : 0;
+    const sc = d ? d.workouts.reduce((a, w) => a + filledSets(w).length, 0) : 0;
+    $('daySummary').textContent = n ? `${n}種目・${sc}セット` : '';
+  }
+
+  function goDate(k) { if (isYmd(k)) { cur = k; renderLog(); $('v-log').scrollTop = 0; } }
+  $('prevDay').onclick = () => goDate(addDays(cur, -1));
+  $('nextDay').onclick = () => goDate(addDays(cur, 1));
+  $('todayBtn').onclick = () => goDate(today());
+  const dateInput = $('dateInput');
+  dateInput.addEventListener('change', () => goDate(dateInput.value));
+  dateInput.addEventListener('click', () => { try { dateInput.showPicker(); } catch {} });
+
+  function bodyInput(field, val) {
+    const d = getDay(cur, true);
+    d.body[field] = val;
+    cleanDay(cur); save();
+  }
+  $('bw').addEventListener('input', e => bodyInput('weight', num(e.target.value)));
+  $('bf').addEventListener('input', e => bodyInput('fat', num(e.target.value)));
+  $('bw').addEventListener('focus', e => e.target.select());
+  $('bf').addEventListener('focus', e => e.target.select());
+  $('dayMemo').addEventListener('input', e => { bodyInput('memo', e.target.value); autoGrow(e.target); });
+
+  /* メニューを呼び出す */
+  $('callBtn').onclick = openCall;
+  function openCall() {
+    let filter = 'all';
+    const picked = [];
+    const d = getDay(cur, false);
+    const done = new Set(d ? d.workouts.map(w => w.menuId) : []);
+
+    const draw = () => {
+      if (!data.menus.length) {
+        openSheet(`<div class="sheet-head"><h2>メニューを呼び出す</h2></div>
+          <p class="empty">登録されたメニューがありません。<br>メニュータブで登録してください。</p>
+          <button class="btn done" id="goMenu">メニュータブへ</button>`, s => {
+          s.querySelector('#goMenu').onclick = () => { closeSheet(); switchTab('menu'); };
+        });
+        return;
+      }
+      const chips = [`<button class="chip-btn" data-f="all" aria-pressed="${filter === 'all'}">すべて</button>`]
+        .concat(data.categories.map(c => `<button class="chip-btn" data-f="${c.id}" aria-pressed="${filter === c.id}" style="--c:${col(c.color)}"><span class="dot"></span>${esc(c.name)}</button>`)).join('');
+      let list = '';
+      data.categories.forEach(c => {
+        if (filter !== 'all' && filter !== c.id) return;
+        const ms = data.menus.filter(m => m.catId === c.id);
+        if (!ms.length) return;
+        list += `<div class="pick-group" style="--c:${col(c.color)}"><span class="dot"></span>${esc(c.name)}</div>`;
+        ms.forEach(m => {
+          const on = picked.includes(m.id);
+          const prev = lastRecord(m.id, cur);
+          const sub = [m.bw ? '自重' : '', done.has(m.id) ? '追加済み' : '', prev ? `前回 ${shortLabel(prev.key)}` : ''].filter(Boolean).join('・');
+          list += `<button class="pick" data-id="${m.id}" aria-pressed="${on}" style="--c:${col(c.color)}">
+            <span class="dot"></span><span class="nm">${esc(m.name)}${sub ? `<small>${esc(sub)}</small>` : ''}</span><span class="check">${CHECK}</span></button>`;
+        });
+      });
+      if (!list) list = '<p class="empty">この部位のメニューはまだありません。</p>';
+      openSheet(`
+        <div class="sheet-head"><h2>メニューを呼び出す</h2><button class="del" id="closeS" aria-label="閉じる">${X_ICON}</button></div>
+        <div class="chip-row">${chips}</div>
+        <div class="pick-list">${list}</div>
+        <div class="sheet-foot"><button class="btn done" id="addPicked" ${picked.length ? '' : 'disabled'}>${picked.length ? picked.length + '件を追加' : 'メニューを選んでください'}</button></div>`, s => {
+        s.querySelector('#closeS').onclick = closeSheet;
+        s.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; const st = sheet.scrollTop; draw(); sheet.scrollTop = 0; void st; });
+        s.querySelectorAll('.pick').forEach(b => b.onclick = () => {
+          const id = b.dataset.id, i = picked.indexOf(id);
+          i >= 0 ? picked.splice(i, 1) : picked.push(id);
+          b.setAttribute('aria-pressed', String(i < 0));
+          const btn = s.querySelector('#addPicked');
+          btn.disabled = !picked.length;
+          btn.textContent = picked.length ? picked.length + '件を追加' : 'メニューを選んでください';
+        });
+        s.querySelector('#addPicked').onclick = () => {
+          const day = getDay(cur, true);
+          picked.forEach(id => {
+            const m = data.menus.find(x => x.id === id); if (!m) return;
+            const c = catOf(m.catId) || { name: '', color: 0 };
+            const prev = lastRecord(m.id, cur);
+            const n = prev ? filledSets(prev.w).length : 1;
+            day.workouts.push({
+              id: uid(), menuId: m.id, catId: m.catId, name: m.name, cat: c.name, color: c.color, bw: !!m.bw,
+              sets: Array.from({ length: Math.max(1, n) }, emptySet), memo: ''
+            });
+          });
+          if (!day.start && cur === today()) day.start = nowHM();
+          save(); closeSheet(); renderLog();
+          toast(`${picked.length}件のメニューを追加しました`);
+        };
+      });
+    };
+    draw();
+  }
+
+  /* ---------- 部位タブ ---------- */
+  function renderBody() {
+    const { regions, cats } = lastTrained();
+    document.querySelectorAll('#v-body [data-region]').forEach(el => {
+      const r = el.dataset.region;
+      el.style.setProperty('--h', Math.round(heatOf(regions[r]) * 100) + '%');
+      el.setAttribute('aria-label', `${REGION_NAME[r] || r}:${agoText(regions[r])}`);
+    });
+    const list = $('partList');
+    list.innerHTML = data.categories.length ? data.categories.map(c => {
+      const k = cats[c.id];
+      return `<li class="part-row" style="--c:${col(c.color)}"><span class="dot"></span><b>${esc(c.name)}</b><span class="when">${esc(agoText(k))}</span>
+        <span class="meter"><span style="--h:${Math.round(heatOf(k) * 100)}%"></span></span></li>`;
+    }).join('') : '<li class="empty">部位がありません。</li>';
+  }
+  document.querySelectorAll('#v-body [data-region]').forEach(el => el.addEventListener('click', () => {
+    const r = el.dataset.region;
+    toast(`${REGION_NAME[r] || r}:${agoText(lastTrained().regions[r])}`);
+  }));
+
+  /* ---------- カレンダータブ ---------- */
+  let calY, calM;
+  function resetMonth() { const d = new Date(); calY = d.getFullYear(); calM = d.getMonth(); }
+  resetMonth();
+  function renderCal() {
+    $('calTitle').textContent = `${calY}年${calM + 1}月`;
+    const grid = $('calGrid');
+    let html = [...WD].map((w, i) => `<div class="wd${i === 0 ? ' sun' : i === 6 ? ' sat' : ''}">${w}</div>`).join('');
+    const first = new Date(calY, calM, 1);
+    const last = new Date(calY, calM + 1, 0).getDate();
+    for (let i = 0; i < first.getDay(); i++) html += '<div aria-hidden="true"></div>';
+    const t = today();
+    let trainedDays = 0, sets = 0;
+    for (let day = 1; day <= last; day++) {
+      const k = `${calY}-${pad(calM + 1)}-${pad(day)}`;
+      const d = data.days[k];
+      const tr = hasTrain(d), bd = hasBody(d);
+      const wday = (first.getDay() + day - 1) % 7;
+      const colors = tr ? [...new Set(d.workouts.map(w => w.color))].slice(0, 4) : [];
+      if (tr) { trainedDays++; sets += d.workouts.reduce((a, w) => a + filledSets(w).length, 0); }
+      const cls = ['cday', tr && 'trained', bd && 'has-body', k === t && 'today', wday === 0 && 'sun', wday === 6 && 'sat'].filter(Boolean).join(' ');
+      const label = `${calM + 1}月${day}日${tr ? '、トレーニングあり' : ''}${bd ? '、体重・メモあり' : ''}`;
+      html += `<button class="${cls}" data-k="${k}" aria-label="${label}"><span class="n">${day}</span><span class="dots">${colors.map(c => `<i style="--c:${col(c)}"></i>`).join('')}</span></button>`;
+    }
+    grid.innerHTML = html;
+    grid.querySelectorAll('.cday').forEach(b => b.onclick = () => openDay(b.dataset.k));
+    $('calStats').innerHTML = `
+      <div class="stat"><b>${trainedDays}<small>日</small></b><span>トレーニング</span></div>
+      <div class="stat"><b>${sets}</b><span>合計セット</span></div>`;
+  }
+  $('prevMonth').onclick = () => { calM--; if (calM < 0) { calM = 11; calY--; } renderCal(); };
+  $('nextMonth').onclick = () => { calM++; if (calM > 11) { calM = 0; calY++; } renderCal(); };
+  $('calTodayBtn').onclick = () => { resetMonth(); renderCal(); };
+
+  function openDay(k) {
+    const d = data.days[k];
+    let body = '';
+    if (hasTrain(d)) {
+      const sc = d.workouts.reduce((a, w) => a + filledSets(w).length, 0);
+      body += `<p class="day-meta-line">${d.start ? '開始 ' + esc(d.start) + '・' : ''}${d.workouts.length}種目・${sc}セット</p>`;
+      body += d.workouts.map(w => {
+        const fs = filledSets(w);
+        return `<div class="day-wo" style="--c:${col(w.color)}">
+          <div class="day-wo-head"><span class="dot"></span>${esc(w.name)}<small>${esc(w.cat)}</small></div>
+          ${fs.length ? `<ul class="set-list">${fs.map(s => `<li>${esc(setText(s, w.bw))}</li>`).join('')}</ul>` : '<p class="note">セットの記録なし</p>'}
+          ${w.memo ? `<p class="note">${esc(w.memo)}</p>` : ''}
+        </div>`;
+      }).join('');
+    } else if (d && d.start) {
+      body += `<p class="day-meta-line">開始 ${esc(d.start)}</p>`;
+    }
+    if (hasBody(d)) {
+      body += `<div class="day-wo"><div class="day-wo-head">からだ・メモ</div>
+        ${d.body.weight != null || d.body.fat != null ? `<div class="body-line">${d.body.weight != null ? `<span><small>体重</small>${fmtN(d.body.weight)}kg</span>` : ''}${d.body.fat != null ? `<span><small>体脂肪率</small>${fmtN(d.body.fat)}%</span>` : ''}</div>` : ''}
+        ${(d.body.memo || '').trim() ? `<p class="note">${esc(d.body.memo)}</p>` : ''}
+      </div>`;
+    }
+    if (!hasTrain(d) && !hasBody(d)) body += '<p class="empty">この日の記録はありません。</p>';
+    openSheet(`
+      <div class="sheet-head"><h2>${dayLabel(k)}</h2><button class="del" id="closeS" aria-label="閉じる">${X_ICON}</button></div>
+      ${body}
+      <button class="btn done" id="openLog">${hasTrain(d) || hasBody(d) ? '記録画面で編集する' : 'この日に記録する'}</button>`, s => {
+      s.querySelector('#closeS').onclick = closeSheet;
+      s.querySelector('#openLog').onclick = () => { closeSheet(); cur = k; switchTab('log'); };
+    });
+  }
+
+  /* ---------- メニュータブ ---------- */
+  function renderMenus() {
+    const box = $('menuList');
+    box.innerHTML = '';
+    if (!data.categories.length) box.innerHTML = '<p class="empty">部位がありません。下のボタンから追加してください。</p>';
+    data.categories.forEach(c => {
+      const ms = data.menus.filter(m => m.catId === c.id);
+      const sec = document.createElement('section');
+      sec.className = 'card';
+      sec.style.setProperty('--c', col(c.color));
+      sec.innerHTML = `
+        <div class="cat-head"><span class="dot"></span><b>${esc(c.name)}</b><span class="count">${ms.length}</span>
+          <button class="edit-btn" aria-label="${esc(c.name)}を編集">${PENCIL}</button></div>
+        ${ms.length ? `<ul class="menu-list">${ms.map(m => `<li><button class="menu-row" data-id="${m.id}"><span class="nm">${esc(m.name)}</span>${m.bw ? '<span class="tag">自重</span>' : ''}${CHEV}</button></li>`).join('')}</ul>` : ''}
+        <button class="add sm">＋ ${esc(c.name)}のメニューを追加</button>`;
+      sec.querySelector('.edit-btn').onclick = () => editCat(c);
+      sec.querySelectorAll('.menu-row').forEach(b => b.onclick = () => editMenu(data.menus.find(m => m.id === b.dataset.id)));
+      sec.querySelector('.add').onclick = () => editMenu(null, c.id);
+      box.appendChild(sec);
+    });
+  }
+  $('addCatBtn').onclick = () => editCat(null);
+
+  function editMenu(m, catId) {
+    let cat = m ? m.catId : catId;
+    openSheet(`
+      <div class="sheet-head"><h2>${m ? 'メニューを編集' : 'メニューを追加'}</h2><button class="del" id="closeS" aria-label="閉じる">${X_ICON}</button></div>
+      <label class="field"><span>名前</span><input class="text-input" id="fName" type="text" maxlength="40" placeholder="例:インクラインダンベルプレス" value="${m ? esc(m.name) : ''}"></label>
+      <p class="err" id="fErr" hidden>名前を入力してください</p>
+      <div class="field"><span>部位</span><div class="chip-wrap" id="fCats">${data.categories.map(c => `<button class="chip-btn" data-id="${c.id}" aria-pressed="${c.id === cat}" style="--c:${col(c.color)}"><span class="dot"></span>${esc(c.name)}</button>`).join('')}</div></div>
+      <label class="switch-row"><span>自重の種目<small>重さの欄が「加重」になり、空欄なら自重として記録します</small></span><input type="checkbox" class="switch" id="fBw" ${m && m.bw ? 'checked' : ''}></label>
+      ${m ? '<p class="hint">名前を変えても、過去の記録は元の名前のまま残ります。</p>' : ''}
+      <div class="sheet-actions"><button class="btn" id="fCancel">やめる</button><button class="btn done" id="fSave">保存</button></div>
+      ${m ? `<div class="sheet-danger"><button class="confirm-del" id="fDel">このメニューを削除</button></div>` : ''}`, s => {
+      s.querySelector('#closeS').onclick = closeSheet;
+      s.querySelector('#fCancel').onclick = closeSheet;
+      s.querySelectorAll('#fCats .chip-btn').forEach(b => b.onclick = () => {
+        cat = b.dataset.id;
+        s.querySelectorAll('#fCats .chip-btn').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      });
+      s.querySelector('#fSave').onclick = () => {
+        const name = s.querySelector('#fName').value.trim();
+        if (!name) { s.querySelector('#fErr').hidden = false; s.querySelector('#fName').focus(); return; }
+        if (!catOf(cat)) cat = data.categories[0]?.id;
+        const bw = s.querySelector('#fBw').checked;
+        if (m) Object.assign(m, { name, catId: cat, bw });
+        else data.menus.push({ id: uid(), name, catId: cat, bw });
+        save(); closeSheet(); renderMenus();
+        toast(m ? '保存しました' : `「${name}」を追加しました`);
+      };
+      if (m) armDelete(s.querySelector('#fDel'), 'もう一度押すと削除', () => {
+        data.menus = data.menus.filter(x => x.id !== m.id);
+        save(); closeSheet(); renderMenus(); toast('削除しました(過去の記録は残ります)');
+      });
+      if (!m) setTimeout(() => s.querySelector('#fName').focus(), 50);
+    });
+  }
+
+  function editCat(c) {
+    let color = c ? c.color : data.categories.length % 6;
+    const regs = new Set(c ? c.regions || [] : []);
+    const count = c ? data.menus.filter(m => m.catId === c.id).length : 0;
+    openSheet(`
+      <div class="sheet-head"><h2>${c ? '部位を編集' : '部位を追加'}</h2><button class="del" id="closeS" aria-label="閉じる">${X_ICON}</button></div>
+      <label class="field"><span>部位の名前</span><input class="text-input" id="cName" type="text" maxlength="20" placeholder="例:お尻" value="${c ? esc(c.name) : ''}"></label>
+      <p class="err" id="cErr" hidden>名前を入力してください</p>
+      <div class="field"><span>色</span><div class="colors" id="cColors">${COLORS.map((_, i) => `<button class="color-dot" data-i="${i}" aria-label="色${i + 1}" aria-pressed="${i === color}" style="--c:${col(i)}"></button>`).join('')}</div></div>
+      <div class="field"><span>人体図で赤くする場所(複数選べます)</span><div class="chip-wrap" id="cRegs">${REGIONS.map(([id, nm]) => `<button class="chip-btn" data-r="${id}" aria-pressed="${regs.has(id)}">${nm}</button>`).join('')}</div></div>
+      <div class="sheet-actions"><button class="btn" id="cCancel">やめる</button><button class="btn done" id="cSave">保存</button></div>
+      ${c ? `<div class="sheet-danger"><button class="confirm-del" id="cDel">この部位を削除${count ? `(メニュー${count}件も削除)` : ''}</button></div>` : ''}`, s => {
+      s.querySelector('#closeS').onclick = closeSheet;
+      s.querySelector('#cCancel').onclick = closeSheet;
+      s.querySelectorAll('.color-dot').forEach(b => b.onclick = () => {
+        color = +b.dataset.i;
+        s.querySelectorAll('.color-dot').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      });
+      s.querySelectorAll('#cRegs .chip-btn').forEach(b => b.onclick = () => {
+        const r = b.dataset.r;
+        regs.has(r) ? regs.delete(r) : regs.add(r);
+        b.setAttribute('aria-pressed', String(regs.has(r)));
+      });
+      s.querySelector('#cSave').onclick = () => {
+        const name = s.querySelector('#cName').value.trim();
+        if (!name) { s.querySelector('#cErr').hidden = false; s.querySelector('#cName').focus(); return; }
+        const regions = REGIONS.map(r => r[0]).filter(r => regs.has(r));
+        if (c) Object.assign(c, { name, color, regions });
+        else data.categories.push({ id: uid(), name, color, regions });
+        save(); closeSheet(); renderMenus();
+      };
+      if (c) armDelete(s.querySelector('#cDel'), 'もう一度押すと削除', () => {
+        data.categories = data.categories.filter(x => x.id !== c.id);
+        data.menus = data.menus.filter(m => m.catId !== c.id);
+        save(); closeSheet(); renderMenus(); toast('削除しました(過去の記録は残ります)');
+      });
+      if (!c) setTimeout(() => s.querySelector('#cName').focus(), 50);
+    });
+  }
+
+  /* ---------- データタブ ---------- */
+  function fmtDateTime(iso) {
+    const d = new Date(iso); if (isNaN(d)) return '';
+    return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  function renderData() {
+    $('lastExport').textContent = data.meta.lastExport ? `最後に書き出した日時:${fmtDateTime(data.meta.lastExport)}` : 'まだ書き出していません。';
+    const days = Object.values(data.days);
+    const tDays = days.filter(hasTrain).length;
+    const sets = days.reduce((a, d) => a + d.workouts.reduce((b, w) => b + filledSets(w).length, 0), 0);
+    $('allStats').innerHTML = `
+      <div class="stat"><b>${tDays}<small>日</small></b><span>トレーニング累計</span></div>
+      <div class="stat"><b>${sets}</b><span>累計セット</span></div>
+      <div class="stat"><b>${data.menus.length}</b><span>登録メニュー</span></div>`;
+  }
+  const exportText = () => JSON.stringify(data, null, 2);
+  const isTouch = () => matchMedia('(pointer: coarse)').matches;
+  $('exportBtn').onclick = async () => {
+    data.meta.lastExport = new Date().toISOString();
+    save();
+    const name = `kintore-log-${today()}.json`;
+    const text = exportText();
+    let file = null;
+    try { file = new File([text], name, { type: 'application/json' }); } catch {}
+    if (file && isTouch() && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); renderData(); return; }
+      catch (e) { if (e && e.name === 'AbortError') { renderData(); return; } }
+    }
+    try {
+      const url = URL.createObjectURL(file || new Blob([text], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+      toast('書き出しました');
+    } catch { toast('書き出せませんでした。「テキストでコピー」を使ってください'); }
+    renderData();
+  };
+  $('copyBtn').onclick = async () => {
+    const area = $('copyArea');
+    const text = exportText();
+    area.value = text;
+    try { await navigator.clipboard.writeText(text); toast('コピーしました'); area.hidden = true; }
+    catch { area.hidden = false; area.focus(); area.select(); toast('自動でコピーできませんでした。下の欄を選択してコピーしてください'); }
+  };
+  $('importFile').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      const box = $('importPreview');
+      let v = null;
+      try { v = JSON.parse(rd.result); } catch {}
+      if (!valid(v)) {
+        box.innerHTML = '<b>このファイルは読み込めません</b><p>筋トレログで書き出したJSONファイルを選んでください。</p>';
+        box.hidden = false; return;
+      }
+      const ks = Object.keys(v.days).filter(isYmd).sort();
+      const tDays = ks.filter(k => hasTrain(v.days[k])).length;
+      box.innerHTML = `<b>${esc(f.name)}</b>
+        <p>記録 ${ks.length}日分(トレーニング ${tDays}日)・メニュー ${v.menus.length}件${ks.length ? `・${ks[0].replace(/-/g, '/')} 〜 ${ks[ks.length - 1].replace(/-/g, '/')}` : ''}</p>
+        <p>今このブラウザにあるデータは消えて、このファイルの内容に置き換わります。</p>
+        <div class="row-btns"><button class="btn" id="impCancel">やめる</button><button class="btn done" id="impOk">置き換える</button></div>`;
+      box.hidden = false;
+      box.querySelector('#impCancel').onclick = () => { box.hidden = true; };
+      box.querySelector('#impOk').onclick = () => {
+        data = migrate(v); save();
+        box.hidden = true;
+        cur = today(); renderAll(); toast('読み込みました');
+      };
+    };
+    rd.readAsText(f);
+  });
+
+  /* ---------- タイマータブ(ストレッチループを同梱) ---------- */
+  const frame = $('timerFrame');
+  function syncFrameTheme() {
+    try {
+      const th = document.documentElement.getAttribute('data-theme');
+      const r = frame.contentDocument && frame.contentDocument.documentElement;
+      if (!r) return;
+      th ? r.setAttribute('data-theme', th) : r.removeAttribute('data-theme');
+    } catch {}
+  }
+  frame.addEventListener('load', syncFrameTheme);
+  new MutationObserver(syncFrameTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  /* ---------- タブ切り替え ---------- */
+  const TABS = ['log', 'body', 'cal', 'timer', 'menu', 'data'];
+  function switchTab(name) {
+    TABS.forEach(t => {
+      $('v-' + t).hidden = t !== name;
+      $('t-' + t).setAttribute('aria-selected', String(t === name));
+    });
+    if (name === 'log') renderLog();
+    if (name === 'body') renderBody();
+    if (name === 'cal') renderCal();
+    if (name === 'menu') renderMenus();
+    if (name === 'data') renderData();
+    if (name === 'timer' && !frame.getAttribute('src')) frame.setAttribute('src', 'timer.html');
+  }
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+  function renderAll() { renderLog(); renderBody(); renderCal(); renderMenus(); renderData(); }
+
+  // 日付をまたいでアプリに戻ったら、今日を表示していた場合は新しい今日に合わせる
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    const t = today();
+    if (t !== lastToday) {
+      if (cur === lastToday) cur = t;
+      lastToday = t;
+      if (!$('v-log').hidden) renderLog();
+      if (!$('v-body').hidden) renderBody();
+    }
+  });
+
+  renderLog();
+})();
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
