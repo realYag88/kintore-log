@@ -117,6 +117,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 }
 .icon-btn svg { width: 22px; height: 22px; stroke: var(--fg); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .icon-btn:active, .btn:active { transform: scale(.97); }
+.icon-btn.sm { width: 40px; height: 40px; }
+.icon-btn.sm svg { width: 20px; height: 20px; stroke: var(--muted); }
+.top-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 .btn {
   flex: 1;
@@ -256,7 +259,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 }
 .body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.field > span { font-size: 13px; font-weight: 700; color: var(--muted); }
+.field > span:first-child, .field > label { font-size: 13px; font-weight: 700; color: var(--muted); }
+.delta { font-size: 12px; color: var(--muted); font-weight: 700; font-family: var(--font-num), var(--font-ui); min-height: 1.4em; }
 .unit-input { position: relative; }
 .unit-input .num-input { height: 44px; padding-right: 30px; }
 .unit-input em {
@@ -311,9 +315,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .stat span { font-size: 11.5px; color: var(--muted); font-weight: 700; }
 
 /* Body tab */
-.bodymaps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.bodymap { background: var(--surface); border-radius: var(--radius); padding: 10px 6px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.bodymap svg { width: 100%; max-width: 190px; height: auto; display: block; }
+.bodycard { padding: 10px 12px; }
+.bodymaps { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 8px; align-items: start; }
+.bodymap { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.bodymap svg { height: 290px; width: auto; max-width: 100%; display: block; }
+.bodymap.back svg { height: 158px; }
+.bodymap.back .heat-legend { display: grid; grid-template-columns: repeat(2, auto); gap: 6px 12px; margin-top: 14px; justify-content: center; }
 .bodymap figcaption { font-size: 12px; font-weight: 700; color: var(--muted); }
 .bodymap [data-region] {
   fill: var(--body-base);
@@ -327,12 +334,46 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .heat-legend { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 12px; font-weight: 700; color: var(--muted); }
 .heat-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .heat-legend i { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--body-line); background: color-mix(in srgb, var(--heat) var(--h), var(--body-base)); }
-.part-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.part-row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; }
+.part-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+@media (max-width: 330px) { .part-list { grid-template-columns: 1fr; } }
+.part-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 4px 8px; }
+.part-row .dot { width: 10px; height: 10px; }
 .part-row b { font-size: 14px; }
 .part-row .when { font-size: 12.5px; color: var(--muted); font-weight: 700; font-family: var(--font-num), var(--font-ui); }
 .part-row .meter { grid-column: 2 / 4; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
 .part-row .meter span { display: block; height: 100%; width: var(--h); background: var(--heat); border-radius: 3px; }
+
+/* Kara tab */
+.chart-card { gap: 12px; }
+.chart-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; }
+.seg-btn { border: none; background: transparent; border-radius: 999px; min-height: 34px; padding: 0 14px; font-weight: 700; font-size: 13px; color: var(--muted); }
+.seg-btn[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 4px rgba(0, 0, 0, .08); }
+.chart-sum { display: flex; flex-direction: column; align-items: flex-end; font-family: var(--font-num), var(--font-ui); font-variant-numeric: tabular-nums; }
+.chart-sum b { font-size: 20px; font-weight: 800; line-height: 1.1; }
+.chart-sum b small { font-size: 12px; margin-left: 2px; }
+.chart-sum span { font-size: 12px; color: var(--muted); font-weight: 700; }
+.chart-wrap { position: relative; height: 220px; margin-inline: -4px; touch-action: pan-y; }
+.chart-wrap svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.chart-wrap .grid { stroke: var(--track); stroke-width: 1; }
+.chart-wrap .axis-t { fill: var(--muted); font-family: var(--font-num), var(--font-ui); font-size: 11px; font-weight: 700; }
+.chart-wrap .line { fill: none; stroke: var(--series); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart-wrap .pt { fill: var(--series); stroke: var(--surface); stroke-width: 2; }
+.chart-wrap .cross { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart-wrap .empty-t { fill: var(--muted); font-size: 13px; font-weight: 700; }
+.chart-tip {
+  position: absolute; top: 0; transform: translateX(-50%);
+  background: var(--fg); color: var(--bg);
+  border-radius: 10px; padding: 5px 10px;
+  font-family: var(--font-num), var(--font-ui); font-size: 12.5px; font-weight: 700; white-space: nowrap;
+  pointer-events: none; box-shadow: var(--shadow);
+}
+.rec-table { display: flex; flex-direction: column; }
+.rec-row { display: grid; grid-template-columns: minmax(0, 1fr) 84px 72px; gap: 8px; padding: 7px 2px; border-top: 1px solid var(--surface-2); font-family: var(--font-num), var(--font-ui); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; }
+.rec-row:first-child { border-top: none; }
+.rec-row span:not(:first-child) { text-align: right; }
+.rec-row.head { font-size: 12px; color: var(--muted); padding-top: 0; }
+.rec-row .na { color: var(--muted); font-weight: 600; }
 
 /* Day detail */
 .day-meta-line { margin: -6px 0 0; font-size: 13px; color: var(--muted); font-weight: 700; font-family: var(--font-num), var(--font-ui); }
@@ -511,119 +552,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 <body>
 <div class="app" id="app">
 
-  <!-- 記録 -->
-  <section class="view" id="v-log" role="tabpanel" aria-labelledby="t-log">
-    <header class="top">
-      <div class="brand-wrap"><span class="brand">筋トレログ</span><span class="sub" id="logSub">今日の記録</span></div>
-      <button class="chip-btn" id="todayBtn" hidden>今日に戻る</button>
-    </header>
-    <div class="datebar">
-      <button class="icon-btn" id="prevDay" aria-label="前の日"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
-      <label class="date-pick">
-        <b id="dateLabel"></b><small id="dateYear"></small>
-        <input type="date" id="dateInput" aria-label="日付を選ぶ">
-      </label>
-      <button class="icon-btn" id="nextDay" aria-label="次の日"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
-    </div>
-    <div class="day-meta">
-      <span class="sub" id="daySummary"></span>
-    </div>
-    <div class="stack" id="workouts"></div>
-    <button class="add" id="callBtn">＋ メニューを呼び出す</button>
-    <div class="card">
-      <h3>からだ・メモ</h3>
-      <div class="body-grid">
-        <label class="field"><span>体重</span><span class="unit-input"><input class="num-input" id="bw" type="text" inputmode="decimal" placeholder="0.0"><em>kg</em></span></label>
-        <label class="field"><span>体脂肪率</span><span class="unit-input"><input class="num-input" id="bf" type="text" inputmode="decimal" placeholder="0.0"><em>%</em></span></label>
-      </div>
-      <label class="field"><span>その日のメモ</span><textarea class="memo" id="dayMemo" rows="2" placeholder="朝食・体調など"></textarea></label>
-    </div>
-  </section>
-
-  <!-- 部位 -->
-  <section class="view" id="v-body" role="tabpanel" aria-labelledby="t-body" hidden>
-    <header class="top">
-      <div class="brand-wrap"><span class="brand">部位</span><span class="sub">鍛えた場所が赤くなり、3日で元に戻ります</span></div>
-    </header>
-    <!--
-      人体図(仮)。あとで自作の図に差し替える時は、<svg> の中身を入れ替えて、
-      色をつけたい形に data-region="chest" のように部位IDを付けるだけで動きます。
-      使える部位ID:shoulders chest biceps triceps forearms abs obliques traps lats lowerback glutes quads hamstrings calves
-      色をつけない形(頭・手など)は class="off" を付けてください。
-    -->
-    <div class="bodymaps">
-      <figure class="bodymap" style="margin:0">
-        <svg viewBox="0 0 160 360" role="img" aria-label="前面の図">
-          <ellipse class="off" cx="80" cy="30" rx="17" ry="21"/>
-          <rect class="off" x="72" y="50" width="16" height="14" rx="4"/>
-          <ellipse data-region="shoulders" cx="44" cy="78" rx="15" ry="13"/>
-          <ellipse data-region="shoulders" cx="116" cy="78" rx="15" ry="13"/>
-          <rect data-region="chest" x="56" y="68" width="23" height="38" rx="9"/>
-          <rect data-region="chest" x="81" y="68" width="23" height="38" rx="9"/>
-          <rect data-region="biceps" x="28" y="94" width="16" height="46" rx="8"/>
-          <rect data-region="biceps" x="116" y="94" width="16" height="46" rx="8"/>
-          <rect data-region="forearms" x="22" y="144" width="16" height="52" rx="8"/>
-          <rect data-region="forearms" x="122" y="144" width="16" height="52" rx="8"/>
-          <ellipse class="off" cx="29" cy="206" rx="8" ry="10"/>
-          <ellipse class="off" cx="131" cy="206" rx="8" ry="10"/>
-          <rect data-region="obliques" x="53" y="110" width="10" height="58" rx="5"/>
-          <rect data-region="obliques" x="97" y="110" width="10" height="58" rx="5"/>
-          <rect data-region="abs" x="65" y="110" width="30" height="62" rx="8"/>
-          <rect class="off" x="56" y="175" width="48" height="20" rx="8"/>
-          <rect data-region="quads" x="56" y="198" width="22" height="76" rx="10"/>
-          <rect data-region="quads" x="82" y="198" width="22" height="76" rx="10"/>
-          <rect data-region="calves" x="58" y="280" width="18" height="60" rx="8"/>
-          <rect data-region="calves" x="84" y="280" width="18" height="60" rx="8"/>
-          <ellipse class="off" cx="66" cy="348" rx="11" ry="6"/>
-          <ellipse class="off" cx="94" cy="348" rx="11" ry="6"/>
-        </svg>
-        <figcaption>前面</figcaption>
-      </figure>
-      <figure class="bodymap" style="margin:0">
-        <svg viewBox="0 0 160 360" role="img" aria-label="背面の図">
-          <ellipse class="off" cx="80" cy="30" rx="17" ry="21"/>
-          <rect class="off" x="72" y="50" width="16" height="12" rx="4"/>
-          <path data-region="traps" d="M64 60 H96 L108 76 L80 96 L52 76 Z"/>
-          <ellipse data-region="shoulders" cx="44" cy="78" rx="15" ry="13"/>
-          <ellipse data-region="shoulders" cx="116" cy="78" rx="15" ry="13"/>
-          <path data-region="lats" d="M56 84 L80 102 L104 84 L102 138 Q80 148 58 138 Z"/>
-          <rect data-region="lowerback" x="64" y="144" width="32" height="28" rx="8"/>
-          <rect data-region="triceps" x="28" y="94" width="16" height="46" rx="8"/>
-          <rect data-region="triceps" x="116" y="94" width="16" height="46" rx="8"/>
-          <rect data-region="forearms" x="22" y="144" width="16" height="52" rx="8"/>
-          <rect data-region="forearms" x="122" y="144" width="16" height="52" rx="8"/>
-          <ellipse class="off" cx="29" cy="206" rx="8" ry="10"/>
-          <ellipse class="off" cx="131" cy="206" rx="8" ry="10"/>
-          <rect data-region="glutes" x="56" y="175" width="23" height="34" rx="11"/>
-          <rect data-region="glutes" x="81" y="175" width="23" height="34" rx="11"/>
-          <rect data-region="hamstrings" x="56" y="212" width="22" height="62" rx="10"/>
-          <rect data-region="hamstrings" x="82" y="212" width="22" height="62" rx="10"/>
-          <rect data-region="calves" x="58" y="280" width="18" height="60" rx="9"/>
-          <rect data-region="calves" x="84" y="280" width="18" height="60" rx="9"/>
-          <ellipse class="off" cx="66" cy="348" rx="11" ry="6"/>
-          <ellipse class="off" cx="94" cy="348" rx="11" ry="6"/>
-        </svg>
-        <figcaption>背面</figcaption>
-      </figure>
-    </div>
-    <div class="heat-legend">
-      <span><i style="--h:100%"></i>今日</span>
-      <span><i style="--h:67%"></i>1日前</span>
-      <span><i style="--h:33%"></i>2日前</span>
-      <span><i style="--h:0%"></i>3日以上前</span>
-    </div>
-    <div class="card">
-      <h3>部位ごとの最終トレーニング</h3>
-      <ul class="part-list" id="partList"></ul>
-      <p class="hint" style="margin:0">図のどこを赤くするかは、メニュータブの部位の編集(鉛筆ボタン)で変えられます。</p>
-    </div>
-  </section>
-
   <!-- カレンダー -->
   <section class="view" id="v-cal" role="tabpanel" aria-labelledby="t-cal" hidden>
     <header class="top">
       <div class="brand-wrap"><span class="brand">カレンダー</span><span class="sub">日付をタップで振り返り</span></div>
-      <button class="chip-btn" id="calTodayBtn">今月</button>
+      <div class="top-actions"><button class="chip-btn" id="calTodayBtn">今月</button><button class="icon-btn sm" data-act="settings" aria-label="設定・データ"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
     </header>
     <div class="cal-head">
       <button class="icon-btn" id="prevMonth" aria-label="前の月"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
@@ -639,67 +572,214 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     <div class="stats two" id="calStats"></div>
   </section>
 
+  <!-- 記録 -->
+  <section class="view" id="v-log" role="tabpanel" aria-labelledby="t-log">
+    <header class="top">
+      <div class="brand-wrap"><span class="brand">筋トレログ</span><span class="sub" id="logSub">今日の記録</span></div>
+      <div class="top-actions"><button class="chip-btn" id="todayBtn" hidden>今日に戻る</button><button class="icon-btn sm" data-act="settings" aria-label="設定・データ"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
+    </header>
+    <div class="datebar">
+      <button class="icon-btn" id="prevDay" aria-label="前の日"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <label class="date-pick">
+        <b id="dateLabel"></b><small id="dateYear"></small>
+        <input type="date" id="dateInput" aria-label="日付を選ぶ">
+      </label>
+      <button class="icon-btn" id="nextDay" aria-label="次の日"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="day-meta">
+      <span class="sub" id="daySummary"></span>
+    </div>
+    <div class="stack" id="workouts"></div>
+    <button class="add" id="callBtn">＋ メニューを呼び出す</button>
+    <div class="card">
+      <h3>その日のメモ</h3>
+      <textarea class="memo" id="dayMemo" rows="2" placeholder="朝食・体調など" aria-label="その日のメモ"></textarea>
+    </div>
+  </section>
+
   <!-- タイマー -->
   <section class="view view-timer" id="v-timer" role="tabpanel" aria-labelledby="t-timer" hidden>
     <iframe id="timerFrame" title="ストレッチループ" allow="screen-wake-lock; autoplay"></iframe>
+  </section>
+
+  <!-- 部位 -->
+  <section class="view" id="v-body" role="tabpanel" aria-labelledby="t-body" hidden>
+    <header class="top">
+      <div class="brand-wrap"><span class="brand">部位</span><span class="sub">鍛えた場所が赤くなり、3日で元に戻ります</span></div>
+      <div class="top-actions"><button class="icon-btn sm" data-act="settings" aria-label="設定・データ"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
+    </header>
+    <!--
+      人体図(仮)。あとで自作の図に差し替える時は、<svg> の中身を入れ替えて、
+      色をつけたい形に data-region="chest" のように部位IDを付けるだけで動きます。
+      使える部位ID:shoulders chest biceps forearms abs obliques traps lats lowerback quads calves
+      色をつけない形(頭・手など)は class="off" を付けてください。
+    -->
+    <div class="card bodycard">
+      <div class="bodymaps">
+        <figure class="bodymap">
+          <svg viewBox="14 4 132 352" role="img" aria-label="前面の図">
+            <ellipse class="off" cx="80" cy="30" rx="17" ry="21"/>
+            <rect class="off" x="72" y="50" width="16" height="14" rx="4"/>
+            <ellipse data-region="shoulders" cx="44" cy="78" rx="15" ry="13"/>
+            <ellipse data-region="shoulders" cx="116" cy="78" rx="15" ry="13"/>
+            <rect data-region="chest" x="56" y="68" width="23" height="38" rx="9"/>
+            <rect data-region="chest" x="81" y="68" width="23" height="38" rx="9"/>
+            <rect data-region="biceps" x="28" y="94" width="16" height="46" rx="8"/>
+            <rect data-region="biceps" x="116" y="94" width="16" height="46" rx="8"/>
+            <rect data-region="forearms" x="22" y="144" width="16" height="52" rx="8"/>
+            <rect data-region="forearms" x="122" y="144" width="16" height="52" rx="8"/>
+            <ellipse class="off" cx="29" cy="206" rx="8" ry="10"/>
+            <ellipse class="off" cx="131" cy="206" rx="8" ry="10"/>
+            <rect data-region="obliques" x="53" y="110" width="10" height="58" rx="5"/>
+            <rect data-region="obliques" x="97" y="110" width="10" height="58" rx="5"/>
+            <rect data-region="abs" x="65" y="110" width="30" height="62" rx="8"/>
+            <rect class="off" x="56" y="175" width="48" height="20" rx="8"/>
+            <rect data-region="quads" x="56" y="198" width="22" height="76" rx="10"/>
+            <rect data-region="quads" x="82" y="198" width="22" height="76" rx="10"/>
+            <rect data-region="calves" x="58" y="280" width="18" height="60" rx="8"/>
+            <rect data-region="calves" x="84" y="280" width="18" height="60" rx="8"/>
+            <ellipse class="off" cx="66" cy="348" rx="11" ry="6"/>
+            <ellipse class="off" cx="94" cy="348" rx="11" ry="6"/>
+          </svg>
+          <figcaption>前面</figcaption>
+        </figure>
+        <figure class="bodymap back">
+          <svg viewBox="26 4 108 192" role="img" aria-label="背中の図">
+            <ellipse class="off" cx="80" cy="30" rx="17" ry="21"/>
+            <rect class="off" x="72" y="50" width="16" height="12" rx="4"/>
+            <ellipse class="off" cx="44" cy="78" rx="15" ry="13"/>
+            <ellipse class="off" cx="116" cy="78" rx="15" ry="13"/>
+            <path data-region="traps" d="M64 60 H96 L108 76 L80 96 L52 76 Z"/>
+            <path data-region="lats" d="M56 84 L80 102 L104 84 L102 138 Q80 148 58 138 Z"/>
+            <rect data-region="lowerback" x="64" y="144" width="32" height="28" rx="8"/>
+            <rect class="off" x="58" y="176" width="44" height="16" rx="8"/>
+          </svg>
+          <figcaption>背中</figcaption>
+          <div class="heat-legend">
+            <span><i style="--h:100%"></i>今日</span>
+            <span><i style="--h:67%"></i>1日前</span>
+            <span><i style="--h:33%"></i>2日前</span>
+            <span><i style="--h:0%"></i>3日〜</span>
+          </div>
+        </figure>
+      </div>
+    </div>
+    <div class="card">
+      <h3>部位ごとの最終トレーニング</h3>
+      <ul class="part-list" id="partList"></ul>
+      <p class="hint" style="margin:0">図のどこを赤くするかは、メニュータブの部位の編集(鉛筆ボタン)で変えられます。</p>
+    </div>
+  </section>
+
+  <!-- カラダ -->
+  <section class="view" id="v-kara" role="tabpanel" aria-labelledby="t-kara" hidden>
+    <header class="top">
+      <div class="brand-wrap"><span class="brand">カラダ</span><span class="sub" id="karaSub">体重・体脂肪率</span></div>
+      <div class="top-actions"><button class="chip-btn" id="kTodayBtn" hidden>今日に戻る</button><button class="icon-btn sm" data-act="settings" aria-label="設定・データ"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
+    </header>
+    <div class="datebar">
+      <button class="icon-btn" id="kPrev" aria-label="前の日"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <label class="date-pick">
+        <b id="kDateLabel"></b><small id="kDateYear"></small>
+        <input type="date" id="kDateInput" aria-label="日付を選ぶ">
+      </label>
+      <button class="icon-btn" id="kNext" aria-label="次の日"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="card">
+      <div class="body-grid">
+        <div class="field">
+          <label for="bw">体重</label>
+          <span class="unit-input"><input class="num-input" id="bw" type="text" inputmode="decimal" placeholder="0.0"><em>kg</em></span>
+          <small class="delta" id="bwDelta"></small>
+        </div>
+        <div class="field">
+          <label for="bf">体脂肪率</label>
+          <span class="unit-input"><input class="num-input" id="bf" type="text" inputmode="decimal" placeholder="0.0"><em>%</em></span>
+          <small class="delta" id="bfDelta"></small>
+        </div>
+      </div>
+    </div>
+    <div class="card chart-card">
+      <div class="chart-head">
+        <div class="seg" role="group" aria-label="グラフの項目">
+          <button class="seg-btn" data-metric="weight" aria-pressed="true">体重</button>
+          <button class="seg-btn" data-metric="fat" aria-pressed="false">体脂肪率</button>
+        </div>
+        <div class="chart-sum" id="chartSum"></div>
+      </div>
+      <div class="chip-row" id="rangeRow">
+        <button class="chip-btn" data-range="1" aria-pressed="false">1ヶ月</button>
+        <button class="chip-btn" data-range="3" aria-pressed="true">3ヶ月</button>
+        <button class="chip-btn" data-range="6" aria-pressed="false">半年</button>
+        <button class="chip-btn" data-range="12" aria-pressed="false">1年</button>
+        <button class="chip-btn" data-range="all" aria-pressed="false">全期間</button>
+      </div>
+      <div class="chart-wrap" id="chartWrap">
+        <svg id="chart" role="img" aria-label="推移グラフ"></svg>
+        <div class="chart-tip" id="chartTip" hidden></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>最近の記録</h3>
+      <div class="rec-table" id="recList"></div>
+    </div>
   </section>
 
   <!-- メニュー -->
   <section class="view" id="v-menu" role="tabpanel" aria-labelledby="t-menu" hidden>
     <header class="top">
       <div class="brand-wrap"><span class="brand">メニュー</span><span class="sub">部位ごとに登録</span></div>
+      <div class="top-actions"><button class="icon-btn sm" data-act="settings" aria-label="設定・データ"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
     </header>
     <div class="stack" id="menuList"></div>
     <button class="add" id="addCatBtn">＋ 部位を追加</button>
   </section>
 
-  <!-- データ -->
-  <section class="view" id="v-data" role="tabpanel" aria-labelledby="t-data" hidden>
-    <header class="top">
-      <div class="brand-wrap"><span class="brand">データ</span><span class="sub">このブラウザに保存されています</span></div>
-    </header>
-    <div class="card">
-      <h3>書き出し</h3>
-      <p>記録をJSONファイルに保存します。機種変更やブラウザのデータ削除で記録が消えないよう、ときどき書き出しておいてください。</p>
-      <p id="lastExport"></p>
-      <div class="row-btns">
-        <button class="btn done" id="exportBtn"><svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>書き出す</button>
-        <button class="btn" id="copyBtn"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>テキストでコピー</button>
-      </div>
-      <textarea class="copy-area" id="copyArea" readonly hidden aria-label="書き出したJSON"></textarea>
-    </div>
-    <div class="card">
-      <h3>読み込み</h3>
-      <p>書き出したJSONファイルを選ぶと、今のデータと置き換えます。</p>
-      <div class="row-btns">
-        <label class="btn file-label"><svg viewBox="0 0 24 24"><path d="M12 20V9"/><path d="M7 14l5-5 5 5"/><path d="M5 4h14"/></svg>ファイルを選ぶ<input type="file" id="importFile" accept="application/json,.json"></label>
-      </div>
-      <div class="import-preview" id="importPreview" hidden></div>
-    </div>
-    <div class="stats" id="allStats"></div>
-  </section>
-
   <nav class="tabs" role="tablist" aria-label="画面の切り替え">
-    <button class="tab" role="tab" id="t-log" data-tab="log" aria-controls="v-log" aria-selected="true">
-      <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg></span>記録
-    </button>
-    <button class="tab" role="tab" id="t-body" data-tab="body" aria-controls="v-body" aria-selected="false">
-      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2.5"/><path d="M5 9l7-1.5L19 9M12 7.5V14M8.5 21.5L12 14l3.5 7.5"/></svg></span>部位
-    </button>
     <button class="tab" role="tab" id="t-cal" data-tab="cal" aria-controls="v-cal" aria-selected="false">
       <span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>カレンダー
+    </button>
+    <button class="tab" role="tab" id="t-log" data-tab="log" aria-controls="v-log" aria-selected="true">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg></span>記録
     </button>
     <button class="tab" role="tab" id="t-timer" data-tab="timer" aria-controls="v-timer" aria-selected="false">
       <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2.5h4"/></svg></span>タイマー
     </button>
+    <button class="tab" role="tab" id="t-body" data-tab="body" aria-controls="v-body" aria-selected="false">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2.5"/><path d="M5 9l7-1.5L19 9M12 7.5V14M8.5 21.5L12 14l3.5 7.5"/></svg></span>部位
+    </button>
+    <button class="tab" role="tab" id="t-kara" data-tab="kara" aria-controls="v-kara" aria-selected="false">
+      <span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M8.5 10a5 5 0 0 1 7 0"/><path d="M12 10.5l1.5-2"/></svg></span>カラダ
+    </button>
     <button class="tab" role="tab" id="t-menu" data-tab="menu" aria-controls="v-menu" aria-selected="false">
       <span class="ic"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></span>メニュー
     </button>
-    <button class="tab" role="tab" id="t-data" data-tab="data" aria-controls="v-data" aria-selected="false">
-      <span class="ic"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6"/><path d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/></svg></span>データ
-    </button>
   </nav>
 </div>
+
+<template id="settingsTpl">
+  <div class="sheet-head"><h2>設定・データ</h2><button class="del" data-close aria-label="閉じる"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <p class="hint">記録はこのブラウザ(ホーム画面のアプリ)の中に保存されています。</p>
+  <div class="card">
+    <h3>書き出し</h3>
+    <p>記録をJSONファイルに保存します。機種変更やブラウザのデータ削除で記録が消えないよう、ときどき書き出しておいてください。</p>
+    <p id="lastExport"></p>
+    <div class="row-btns">
+      <button class="btn done" id="exportBtn"><svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>書き出す</button>
+      <button class="btn" id="copyBtn"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>コピー</button>
+    </div>
+    <textarea class="copy-area" id="copyArea" readonly hidden aria-label="書き出したJSON"></textarea>
+  </div>
+  <div class="card">
+    <h3>読み込み</h3>
+    <p>書き出したJSONファイルを選ぶと、今のデータと置き換えます。</p>
+    <div class="row-btns">
+      <label class="btn file-label"><svg viewBox="0 0 24 24"><path d="M12 20V9"/><path d="M7 14l5-5 5 5"/><path d="M5 4h14"/></svg>ファイルを選ぶ<input type="file" id="importFile" accept="application/json,.json"></label>
+    </div>
+    <div class="import-preview" id="importPreview" hidden></div>
+  </div>
+  <div class="stats" id="allStats"></div>
+</template>
 
 <div class="scrim" id="scrim" hidden>
   <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
@@ -755,19 +835,24 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   }
   /* 人体図の部位ID(SVGの data-region と対応) */
   const REGIONS = [
-    ['shoulders', '肩'], ['chest', '胸'], ['biceps', '上腕二頭筋'], ['triceps', '上腕三頭筋'], ['forearms', '前腕'],
-    ['abs', '腹筋'], ['obliques', '脇腹'], ['traps', '僧帽筋'], ['lats', '背中'], ['lowerback', '腰'],
-    ['glutes', 'お尻'], ['quads', '太もも前'], ['hamstrings', '太もも裏'], ['calves', 'ふくらはぎ']
+    ['shoulders', '肩'], ['chest', '胸'], ['biceps', '上腕'], ['forearms', '前腕'],
+    ['abs', '腹筋'], ['obliques', '脇腹'], ['traps', '僧帽筋'], ['lats', '広背筋'], ['lowerback', '腰'],
+    ['quads', '太もも'], ['calves', 'ふくらはぎ']
   ];
   const REGION_NAME = Object.fromEntries(REGIONS);
   const NAME_REGIONS = {
     '胸': ['chest'], '背中': ['lats', 'traps', 'lowerback'], '肩': ['shoulders'],
-    '腕': ['biceps', 'triceps', 'forearms'], '脚': ['quads', 'hamstrings', 'glutes', 'calves'], '腹': ['abs', 'obliques']
+    '腕': ['biceps', 'forearms'], '脚': ['quads', 'calves'], '腹': ['abs', 'obliques']
   };
+  // 図から外した部位は近い場所にまとめる
+  const REGION_ALIAS = { triceps: 'biceps', hamstrings: 'quads', glutes: 'quads' };
   const FADE_DAYS = 3; // この日数で白に戻る
   function migrate(v) {
     v.meta = v.meta || {};
-    v.categories.forEach(c => { if (!Array.isArray(c.regions)) c.regions = (NAME_REGIONS[c.name] || []).slice(); });
+    v.categories.forEach(c => {
+      if (!Array.isArray(c.regions)) c.regions = (NAME_REGIONS[c.name] || []).slice();
+      c.regions = [...new Set(c.regions.map(r => REGION_ALIAS[r] || r).filter(r => REGION_NAME[r]))];
+    });
     return v;
   }
   const valid = v => v && typeof v === 'object' && Array.isArray(v.categories) && Array.isArray(v.menus) && v.days && typeof v.days === 'object';
@@ -895,8 +980,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     if (!n) box.innerHTML = '<p class="empty">まだメニューがありません。<br>下のボタンからやるメニューを呼び出してください。</p>';
     else d.workouts.forEach((w, i) => box.appendChild(woCard(d, w, i)));
 
-    $('bw').value = d?.body.weight ?? '';
-    $('bf').value = d?.body.fat ?? '';
     $('dayMemo').value = d?.body.memo || '';
     autoGrow($('dayMemo'));
   }
@@ -982,16 +1065,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   dateInput.addEventListener('change', () => goDate(dateInput.value));
   dateInput.addEventListener('click', () => { try { dateInput.showPicker(); } catch {} });
 
-  function bodyInput(field, val) {
-    const d = getDay(cur, true);
+  function bodyInput(k, field, val) {
+    const d = getDay(k, true);
     d.body[field] = val;
-    cleanDay(cur); save();
+    cleanDay(k); save();
   }
-  $('bw').addEventListener('input', e => bodyInput('weight', num(e.target.value)));
-  $('bf').addEventListener('input', e => bodyInput('fat', num(e.target.value)));
-  $('bw').addEventListener('focus', e => e.target.select());
-  $('bf').addEventListener('focus', e => e.target.select());
-  $('dayMemo').addEventListener('input', e => { bodyInput('memo', e.target.value); autoGrow(e.target); });
+  $('dayMemo').addEventListener('input', e => { bodyInput(cur, 'memo', e.target.value); autoGrow(e.target); });
 
   /* メニューを呼び出す */
   $('callBtn').onclick = openCall;
@@ -1082,6 +1161,193 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     const r = el.dataset.region;
     toast(`${REGION_NAME[r] || r}:${agoText(lastTrained().regions[r])}`);
   }));
+
+  /* ---------- カラダタブ(体重・体脂肪率) ---------- */
+  let karaCur = today();
+  let metric = 'weight';
+  let range = '3';
+  const f1 = v => (+v).toFixed(1);
+  const METRIC = {
+    weight: { label: '体重', unit: 'kg', color: 'var(--lap-2)' },
+    fat: { label: '体脂肪率', unit: '%', color: 'var(--lap-3)' }
+  };
+  // その指標が入っている日を古い順に [{k, v}]
+  const series = m => Object.keys(data.days).filter(isYmd).sort()
+    .map(k => ({ k, v: data.days[k].body[m] })).filter(p => p.v != null);
+
+  function renderKara() {
+    const t = today();
+    $('kDateLabel').textContent = dayLabel(karaCur);
+    $('kDateYear').textContent = karaCur.slice(0, 4) + '年';
+    $('kDateInput').value = karaCur;
+    $('kTodayBtn').hidden = karaCur === t;
+    $('karaSub').textContent = karaCur === t ? '体重・体脂肪率' : '過去の記録を編集中';
+    const d = getDay(karaCur, false);
+    $('bw').value = d?.body.weight ?? '';
+    $('bf').value = d?.body.fat ?? '';
+    renderDelta();
+    renderChart();
+    renderRecent();
+  }
+  function renderDelta() {
+    [['weight', 'bwDelta'], ['fat', 'bfDelta']].forEach(([m, id]) => {
+      const d = getDay(karaCur, false);
+      const v = d?.body[m];
+      const prev = series(m).filter(p => p.k < karaCur).pop();
+      const u = METRIC[m].unit;
+      if (v == null || !prev) { $(id).textContent = prev ? `前回 ${f1(prev.v)}${u}(${shortLabel(prev.k)})` : ''; return; }
+      const diff = +(v - prev.v).toFixed(2);
+      $(id).textContent = `前回(${shortLabel(prev.k)})から ${diff > 0 ? '+' : diff < 0 ? '−' : '±'}${f1(Math.abs(diff))}${u}`;
+    });
+  }
+  function karaInput(m, el) {
+    bodyInput(karaCur, m, num(el.value));
+    renderDelta(); renderChart(); renderRecent();
+  }
+  $('bw').addEventListener('input', e => karaInput('weight', e.target));
+  $('bf').addEventListener('input', e => karaInput('fat', e.target));
+  $('bw').addEventListener('focus', e => e.target.select());
+  $('bf').addEventListener('focus', e => e.target.select());
+  function goKara(k) { if (isYmd(k)) { karaCur = k; renderKara(); } }
+  $('kPrev').onclick = () => goKara(addDays(karaCur, -1));
+  $('kNext').onclick = () => goKara(addDays(karaCur, 1));
+  $('kTodayBtn').onclick = () => goKara(today());
+  const kDate = $('kDateInput');
+  kDate.addEventListener('change', () => goKara(kDate.value));
+  kDate.addEventListener('click', () => { try { kDate.showPicker(); } catch {} });
+  document.querySelectorAll('.seg-btn').forEach(b => b.onclick = () => {
+    metric = b.dataset.metric;
+    document.querySelectorAll('.seg-btn').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    renderChart();
+  });
+  document.querySelectorAll('#rangeRow .chip-btn').forEach(b => b.onclick = () => {
+    range = b.dataset.range;
+    document.querySelectorAll('#rangeRow .chip-btn').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    renderChart();
+  });
+
+  // 目盛りの間隔を「きりのいい数」に
+  function niceStep(span, count) {
+    const raw = span / count;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    const n = raw / pow;
+    return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * pow;
+  }
+  let chartPts = [];
+  function renderChart() {
+    const svg = $('chart'), wrap = $('chartWrap'), tip = $('chartTip');
+    tip.hidden = true;
+    const M = METRIC[metric];
+    wrap.style.setProperty('--series', M.color);
+    const W = Math.max(240, wrap.clientWidth), H = wrap.clientHeight || 220;
+    const pl = 38, pr = 14, pt = 30, pb = 26;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const all = series(metric);
+    const t = today();
+    // 横軸の範囲
+    let start;
+    if (range === 'all') start = all.length ? all[0].k : addDays(t, -30);
+    else { const d = parseYmd(t); d.setMonth(d.getMonth() - +range); start = ymd(d); }
+    if (start > addDays(t, -7)) start = addDays(t, -7);
+    const pts = all.filter(p => p.k >= start && p.k <= t);
+    const recent = all.filter(p => p.k <= t);
+    // 見出しの数値
+    const last = recent[recent.length - 1];
+    if (last) {
+      const first = pts[0];
+      const ch = first && pts.length > 1 ? +(last.v - first.v).toFixed(2) : null;
+      $('chartSum').innerHTML = `<b>${f1(last.v)}<small>${M.unit}</small></b><span>${ch == null ? `${shortLabel(last.k)}の${M.label}` : `期間内 ${ch > 0 ? '+' : ch < 0 ? '−' : '±'}${f1(Math.abs(ch))}${M.unit}`}</span>`;
+    } else $('chartSum').innerHTML = '';
+
+    const x0 = parseYmd(start).getTime(), x1 = parseYmd(t).getTime();
+    const X = k => pl + (parseYmd(k).getTime() - x0) / Math.max(1, x1 - x0) * (W - pl - pr);
+    let html = '';
+    // 縦軸
+    let lo, hi, step;
+    if (pts.length) {
+      lo = Math.min(...pts.map(p => p.v)); hi = Math.max(...pts.map(p => p.v));
+      const padV = Math.max((hi - lo) * 0.15, metric === 'weight' ? 0.5 : 0.5);
+      lo -= padV; hi += padV;
+      step = niceStep(hi - lo, 4);
+      lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+    } else { lo = 0; hi = 1; step = 1; }
+    const Y = v => pt + (hi - v) / (hi - lo) * (H - pt - pb);
+    if (pts.length) {
+      for (let v = lo; v <= hi + step / 2; v += step) {
+        const y = Y(v).toFixed(1);
+        html += `<line class="grid" x1="${pl}" x2="${W - pr}" y1="${y}" y2="${y}"/>`;
+        html += `<text class="axis-t" x="${pl - 6}" y="${y}" text-anchor="end" dominant-baseline="middle">${fmtN(+v.toFixed(2))}</text>`;
+      }
+    }
+    // 横軸(1ヶ月は日付、それ以上は月)
+    const ticks = [];
+    if (range === '1') {
+      for (let k = start; k <= t; k = addDays(k, 7)) ticks.push({ k, label: shortLabel(k) });
+    } else {
+      const d = parseYmd(start); d.setDate(1); d.setMonth(d.getMonth() + 1);
+      const months = [];
+      while (ymd(d) <= t) { months.push(ymd(d)); d.setMonth(d.getMonth() + 1); }
+      const every = Math.max(1, Math.ceil(months.length / 6));
+      months.forEach((k, i) => {
+        if (i % every) return;
+        const dd = parseYmd(k);
+        ticks.push({ k, label: dd.getMonth() === 0 || i === 0 && months.length > 12 ? `${dd.getFullYear()}/${dd.getMonth() + 1}` : `${dd.getMonth() + 1}月` });
+      });
+    }
+    ticks.forEach(tk => {
+      const x = X(tk.k);
+      if (x < pl - 1 || x > W - pr + 1) return;
+      html += `<text class="axis-t" x="${x.toFixed(1)}" y="${H - 6}" text-anchor="middle">${tk.label}</text>`;
+    });
+    html += `<line class="grid" x1="${pl}" x2="${W - pr}" y1="${H - pb}" y2="${H - pb}"/>`;
+    if (!pts.length) {
+      html += `<text class="empty-t" x="${(pl + W - pr) / 2}" y="${(pt + H - pb) / 2}" text-anchor="middle">この期間の${M.label}の記録はまだありません</text>`;
+    } else {
+      chartPts = pts.map(p => ({ ...p, x: X(p.k), y: Y(p.v) }));
+      if (chartPts.length > 1) html += `<path class="line" d="${chartPts.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ')}"/>`;
+      if ((W - pl - pr) / chartPts.length >= 14) chartPts.forEach(p => { html += `<circle class="pt" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5"/>`; });
+      const lp = chartPts[chartPts.length - 1];
+      html += `<circle class="pt" cx="${lp.x.toFixed(1)}" cy="${lp.y.toFixed(1)}" r="5"/>`;
+      html += `<line class="cross" id="cross" x1="0" x2="0" y1="${pt}" y2="${H - pb}" visibility="hidden"/><circle class="pt" id="hoverPt" r="5.5" visibility="hidden"/>`;
+      html += `<rect id="hit" x="${pl}" y="0" width="${W - pl - pr}" height="${H}" fill="transparent"/>`;
+    }
+    svg.innerHTML = html;
+    svg.setAttribute('aria-label', `${M.label}の推移`);
+    const hit = svg.querySelector('#hit');
+    if (!hit) { chartPts = []; return; }
+    const show = e => {
+      const r = svg.getBoundingClientRect();
+      const mx = (e.clientX - r.left) * (W / r.width);
+      let best = chartPts[0];
+      chartPts.forEach(p => { if (Math.abs(p.x - mx) < Math.abs(best.x - mx)) best = p; });
+      const cross = svg.querySelector('#cross'), hp = svg.querySelector('#hoverPt');
+      cross.setAttribute('x1', best.x); cross.setAttribute('x2', best.x); cross.setAttribute('visibility', 'visible');
+      hp.setAttribute('cx', best.x); hp.setAttribute('cy', best.y); hp.setAttribute('visibility', 'visible');
+      tip.textContent = `${dayLabel(best.k)} ${f1(best.v)}${M.unit}`;
+      tip.hidden = false;
+      const px = best.x * (r.width / W);
+      tip.style.left = Math.min(r.width - tip.offsetWidth / 2, Math.max(tip.offsetWidth / 2, px)) + 'px';
+    };
+    const hide = () => {
+      tip.hidden = true;
+      svg.querySelector('#cross')?.setAttribute('visibility', 'hidden');
+      svg.querySelector('#hoverPt')?.setAttribute('visibility', 'hidden');
+    };
+    hit.addEventListener('pointermove', show);
+    hit.addEventListener('pointerdown', show);
+    hit.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
+  }
+  let resizeT = 0;
+  window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (!$('v-kara').hidden) renderChart(); }, 150); });
+
+  function renderRecent() {
+    const ks = Object.keys(data.days).filter(k => isYmd(k) && (data.days[k].body.weight != null || data.days[k].body.fat != null)).sort().reverse().slice(0, 14);
+    const cell = (v, u) => v != null ? `${f1(v)}${u}` : '<span class="na">—</span>';
+    $('recList').innerHTML = ks.length
+      ? `<div class="rec-row head"><span>日付</span><span>体重</span><span>体脂肪率</span></div>` +
+        ks.map(k => { const b = data.days[k].body; return `<div class="rec-row"><span>${dayLabel(k)}</span><span>${cell(b.weight, 'kg')}</span><span>${cell(b.fat, '%')}</span></div>`; }).join('')
+      : '<p class="empty">まだ記録がありません。上の欄に入力するとここに並びます。</p>';
+  }
 
   /* ---------- カレンダータブ ---------- */
   let calY, calM;
@@ -1248,7 +1514,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     });
   }
 
-  /* ---------- データタブ ---------- */
+  /* ---------- 設定・データ(右上の歯車) ---------- */
   function fmtDateTime(iso) {
     const d = new Date(iso); if (isNaN(d)) return '';
     return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -1265,6 +1531,14 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   }
   const exportText = () => JSON.stringify(data, null, 2);
   const isTouch = () => matchMedia('(pointer: coarse)').matches;
+  function openSettings() {
+    openSheet($('settingsTpl').innerHTML, s => {
+      s.querySelector('[data-close]').onclick = closeSheet;
+      bindData(); renderData();
+    });
+  }
+  document.querySelectorAll('[data-act="settings"]').forEach(b => b.addEventListener('click', openSettings));
+  function bindData() {
   $('exportBtn').onclick = async () => {
     data.meta.lastExport = new Date().toISOString();
     save();
@@ -1283,7 +1557,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       document.body.appendChild(a); a.click();
       setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
       toast('書き出しました');
-    } catch { toast('書き出せませんでした。「テキストでコピー」を使ってください'); }
+    } catch { toast('書き出せませんでした。「コピー」を使ってください'); }
     renderData();
   };
   $('copyBtn').onclick = async () => {
@@ -1316,12 +1590,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       box.querySelector('#impCancel').onclick = () => { box.hidden = true; };
       box.querySelector('#impOk').onclick = () => {
         data = migrate(v); save();
-        box.hidden = true;
-        cur = today(); renderAll(); toast('読み込みました');
+        closeSheet();
+        cur = today(); karaCur = today(); renderAll(); toast('読み込みました');
       };
     };
     rd.readAsText(f);
   });
+  }
 
   /* ---------- タイマータブ(ストレッチループを同梱) ---------- */
   const frame = $('timerFrame');
@@ -1337,7 +1612,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   new MutationObserver(syncFrameTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
   /* ---------- タブ切り替え ---------- */
-  const TABS = ['log', 'body', 'cal', 'timer', 'menu', 'data'];
+  const TABS = ['cal', 'log', 'timer', 'body', 'kara', 'menu'];
   function switchTab(name) {
     TABS.forEach(t => {
       $('v-' + t).hidden = t !== name;
@@ -1346,12 +1621,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     if (name === 'log') renderLog();
     if (name === 'body') renderBody();
     if (name === 'cal') renderCal();
+    if (name === 'kara') renderKara();
     if (name === 'menu') renderMenus();
-    if (name === 'data') renderData();
     if (name === 'timer' && !frame.getAttribute('src')) frame.setAttribute('src', 'timer.html');
   }
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
-  function renderAll() { renderLog(); renderBody(); renderCal(); renderMenus(); renderData(); }
+  function renderAll() { renderLog(); renderBody(); renderCal(); renderMenus(); if (!$('v-kara').hidden) renderKara(); }
 
   // 日付をまたいでアプリに戻ったら、今日を表示していた場合は新しい今日に合わせる
   document.addEventListener('visibilitychange', () => {
@@ -1359,9 +1634,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     const t = today();
     if (t !== lastToday) {
       if (cur === lastToday) cur = t;
+      if (karaCur === lastToday) karaCur = t;
       lastToday = t;
       if (!$('v-log').hidden) renderLog();
       if (!$('v-body').hidden) renderBody();
+      if (!$('v-kara').hidden) renderKara();
     }
   });
 
