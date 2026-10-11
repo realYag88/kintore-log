@@ -333,7 +333,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .cal-head h2 { margin: 0; text-align: center; font-size: 18px; font-family: var(--font-num), var(--font-ui); font-weight: 800; white-space: nowrap; min-width: 7.2em; }
 .nav-btn { width: 36px; height: 36px; border: none; border-radius: 50%; background: var(--surface); display: grid; place-items: center; padding: 0; flex-shrink: 0; }
 .nav-btn svg { width: 18px; height: 18px; stroke: var(--fg); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-#v-cal { gap: 10px; }
+#v-cal { gap: 10px; padding-block: 10px 12px; }
+#v-cal .cal-grid { flex: 1 1 auto; grid-template-rows: auto repeat(6, minmax(37px, 1fr)); }
+#v-cal .cday { min-height: 0; justify-content: center; gap: 2px; }
+#v-cal .lift, #v-cal .legend, #v-cal .top { flex-shrink: 0; }
+.lg-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lap-5); }
 .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
 .wd { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); padding-bottom: 2px; }
 .wd.sun { color: var(--lap-5); }
@@ -365,7 +369,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   background: var(--lap-4);
 }
 .cday:active { background: var(--surface-2); }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); font-weight: 700; justify-content: center; }
+.legend { display: flex; flex-wrap: nowrap; gap: 6px 14px; font-size: 12px; white-space: nowrap; color: var(--muted); font-weight: 700; justify-content: center; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .lg-train { width: 12px; height: 12px; border-radius: 50%; background: var(--fg); }
 .lg-body { width: 8px; height: 8px; border-radius: 2px; background: var(--lap-4); }
@@ -379,7 +383,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .lift-head svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .lift-main { display: flex; align-items: center; gap: 12px; }
 .lift .emo { width: 48px; height: 48px; font-size: 28px; }
-.lift-main .lift-txt { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; }
+.lift-main .lift-txt { flex-direction: row; align-items: baseline; flex-wrap: nowrap; gap: 10px; flex: 1; }
+.lift-main .lift-thing { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lift-main .lift-total { flex-shrink: 0; }
+.lift-next p, .lift-foot { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .emo {
   width: 64px; height: 64px; flex-shrink: 0;
   border-radius: 50%; background: var(--surface-2);
@@ -673,6 +680,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       <div class="top-actions"><button class="chip-btn" id="calTodayBtn">今月</button><button class="icon-btn sm" data-act="settings" aria-label="設定・データ"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
     </header>
     <div class="cal-grid" id="calGrid"></div>
+    <div class="legend">
+      <span><i class="lg-train"></i>トレーニングした日</span>
+      <span><i class="lg-body"></i>体重・メモ</span>
+      <span><i class="lg-dot"></i>鍛えた部位</span>
+    </div>
     <div class="card lift" id="liftCard" role="button" tabindex="0" aria-label="重さのレート表を開く"></div>
   </section>
 
@@ -1757,6 +1769,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       const label = `${calM + 1}月${day}日${tr ? '、トレーニングあり' : ''}${bd ? '、体重・メモあり' : ''}`;
       html += `<button class="${cls}" data-k="${k}" aria-label="${label}"><span class="n">${day}</span><span class="dots">${colors.map(c => `<i style="--c:${col(c)}"></i>`).join('')}</span></button>`;
     }
+    // 月によって高さが変わらないよう、常に6週(42マス)ぶん作る
+    for (let i = first.getDay() + last; i < 42; i++) html += '<div aria-hidden="true"></div>';
     grid.innerHTML = html;
     grid.querySelectorAll('.cday').forEach(b => b.onclick = () => openDay(b.dataset.k));
     renderLift(trainedDays, sets);
@@ -1794,7 +1808,16 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       nextHtml = `<div class="lift-next"><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p)}" aria-label="次の目標までの進み具合"><span style="--p:${p}%"></span></div>
         <p>次は ${next.e} <b>${esc(next.name)}</b> まで あと <b>${massText(next.kg - total)}</b></p></div>`;
     } else if (isCur && !next) {
-      nextHtml = `<div class="lift-next"><p>用意した重さをすべて超えました!</p></div>`;
+      nextHtml = `<div class="lift-next"><div class="bar"><span style="--p:100%"></span></div><p>用意した重さをすべて超えました!</p></div>`;
+    } else if (!isFuture && total > 0 && next) {
+      // 過去の月:その月の結果を同じ形で出す
+      const base = reached ? reached.kg : 0;
+      const p = Math.max(2, Math.min(100, (total - base) / (next.kg - base) * 100));
+      nextHtml = `<div class="lift-next"><div class="bar"><span style="--p:${p}%"></span></div>
+        <p>${next.e} <b>${esc(next.name)}</b> まで あと <b>${massText(next.kg - total)}</b> でした</p></div>`;
+    } else {
+      // 今月以外も同じ高さにして、カレンダーが上下しないようにする
+      nextHtml = `<div class="lift-next" style="visibility:hidden" aria-hidden="true"><div class="bar"></div><p>&nbsp;</p></div>`;
     }
     let cmp = '';
     if (!isFuture && (total > 0 || prev > 0)) {
@@ -1823,8 +1846,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
         const r = total / t.kg;
         const cls = [total < t.kg && 'off', reached && t === reached && 'now'].filter(Boolean).join(' ');
         return `<li class="${cls}"><span class="e" aria-hidden="true">${t.e}</span><span class="nm">${esc(t.name)}</span><span class="kg">${approx(t)}</span><span class="x">${nf(r, r >= 10 ? 0 : 1)}${t.u}</span></li>`;
-      }).join('')}</ul>
-      <p class="rate-legend"><span>カレンダー:</span><span><i class="lg-train"></i>トレーニングした日</span><span><i class="lg-body"></i>体重・メモあり</span><span>下の点=鍛えた部位</span></p>`,
+      }).join('')}</ul>`,
       s => { s.querySelector('#closeS').onclick = closeSheet; });
   }
   $('liftCard').addEventListener('click', openRates);

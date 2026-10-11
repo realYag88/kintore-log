@@ -1,5 +1,5 @@
 // オフラインでも開けるようにファイルを保存しておく
-const CACHE = 'kintore-log-v11';
+const CACHE = 'kintore-log-v12';
 const FILES = ['./', 'index.html', 'timer.html', 'manifest.webmanifest', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
