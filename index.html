@@ -251,6 +251,18 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .set-h span { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); }
 .set-h i { font-style: normal; font-size: 10px; margin-left: 2px; }
 .set .no { text-align: center; font-family: var(--font-num); font-weight: 800; color: var(--muted); font-size: 14px; }
+.eq-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: -4px; }
+.eq-head > span { font-size: 12px; font-weight: 700; color: var(--muted); padding-left: 4px; }
+.seg.sm { padding: 2px; }
+.seg.sm .seg-btn { min-height: 30px; padding: 0 12px; font-size: 12px; }
+.eq { display: flex; align-items: flex-end; gap: 4px; }
+.eq-f { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.eq-f > span { font-size: 12px; font-weight: 700; color: var(--muted); text-align: center; white-space: nowrap; }
+.eq-f .num-input { height: 46px; font-size: 18px; padding: 0 2px; }
+.eq-op, .eq-p { flex: 0 0 auto; height: 46px; line-height: 46px; text-align: center; font-family: var(--font-num); font-weight: 800; color: var(--muted); }
+.eq-op { width: 14px; font-size: 15px; }
+.eq-p { width: 8px; font-size: 22px; font-weight: 600; }
+.v2-assist .eq-f { flex: 0 0 90px; }
 .v2-row { display: grid; align-items: end; gap: 6px; }
 .v2-load { grid-template-columns: minmax(0, 1.1fr) 14px minmax(0, 1.1fr) 14px minmax(0, .8fr); }
 .v2-reps { grid-template-columns: minmax(0, 1fr) 14px minmax(0, 1fr); }
@@ -262,7 +274,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .v2-op { text-align: center; font-family: var(--font-num); font-weight: 800; color: var(--muted); line-height: 44px; }
 .v2-static { height: 44px; border-radius: 14px; background: var(--surface-2); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
 .v2-assist { display: flex; align-items: end; gap: 10px; }
-.v2-assist .v2-f { width: 110px; flex-shrink: 0; }
+
 .v2-assist small { font-size: 12px; color: var(--muted); font-weight: 700; padding-bottom: 12px; }
 .v2-calc {
   margin: 0;
@@ -650,7 +662,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       <span class="sub" id="daySummary"></span>
     </div>
     <div class="stack" id="workouts"></div>
-    <button class="add" id="callBtn">＋ メニューを呼び出す</button>
+    <button class="add" id="callBtn">＋ メニューを追加</button>
     <div class="card">
       <h3>その日のメモ</h3>
       <textarea class="memo" id="dayMemo" rows="2" placeholder="朝食・体調など" aria-label="その日のメモ"></textarea>
@@ -963,8 +975,21 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   }
   const recordText = w => w.v === 2 ? v2Text(w) : filledSets(w).map(s => setText(s, w.bw)).join('、');
   // 前回の記録(古い形でも)から v2 の値を作る
+  function normCount(w) {
+    if (w.count != null && w.count !== 1) { if (w.plate != null) w.plate = +(w.plate * w.count).toFixed(2); w.count = 1; }
+  }
+  // 「分ける / まとめる」の切り替えに合わせて値を寄せる(合計は変えない)
+  function fitSplit(o, split, bw) {
+    if (bw || split) return o;
+    if (o.base != null || o.plate != null) o.plate = +((o.base || 0) + (o.plate || 0)).toFixed(2);
+    o.base = null;
+    return o;
+  }
   function v2FromPrev(pw) {
-    if (pw.v === 2) return { base: pw.base ?? null, plate: pw.plate ?? null, count: pw.count ?? 1, reps: pw.reps ?? null, setCount: pw.setCount || 1, assist: pw.assist || 0 };
+    if (pw.v === 2) {
+      const cnt = pw.count ?? 1;
+      return { base: pw.base ?? null, plate: pw.plate != null ? +(pw.plate * cnt).toFixed(2) : null, count: 1, reps: pw.reps ?? null, setCount: pw.setCount || 1, assist: pw.assist || 0 };
+    }
     const fs = filledSets(pw), f = fs[0] || emptySet();
     return { base: null, plate: f.weight ?? null, count: 1, reps: f.reps ?? null, setCount: fs.length || 1, assist: f.assist || 0 };
   }
@@ -1148,7 +1173,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 
     const box = $('workouts');
     box.innerHTML = '';
-    if (!n) box.innerHTML = '<p class="empty">まだメニューがありません。<br>下のボタンからやるメニューを呼び出してください。</p>';
+    if (!n) box.innerHTML = '<p class="empty">まだメニューがありません。<br>下のボタンからメニューを追加してください。</p>';
     else d.workouts.forEach((w, i) => box.appendChild(w.v === 2 ? woCardV2(d, w, i) : woCard(d, w, i)));
 
     $('dayMemo').value = d?.body.memo || '';
@@ -1159,6 +1184,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     const el = document.createElement('article');
     el.className = 'card';
     el.style.setProperty('--c', col(w.color));
+    normCount(w);
+    if (w.split == null) w.split = !w.bw;
     const prev = lastRecord(w.menuId, cur);
     const pv = prev ? v2FromPrev(prev.w) : null;
     const ph = (v, d) => v != null ? fmtN(v) : d;
@@ -1170,21 +1197,24 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
         <button class="confirm-del" data-act="delwo" aria-label="${esc(w.name)}を削除">${X_ICON}</button>
       </div>
       ${prev ? `<p class="prev"><span>前回 ${shortLabel(prev.key)}:${esc(recordText(prev.w))}</span><button class="link-btn" data-act="copyprev">前回をコピー</button></p>` : ''}
-      <div class="v2-row v2-load">
-        <label class="v2-f">${w.bw ? '<span>本体</span><span class="v2-static">自重</span>' : `<span>初期重量</span><span class="unit-input"><input class="num-input" data-f="base" type="text" inputmode="decimal" value="${val(w.base)}" placeholder="${ph(pv && pv.base, '0')}"><em>kg</em></span>`}</label>
-        <span class="v2-op">+</span>
-        <label class="v2-f"><span>${w.bw ? '加重' : 'ウェイト'}</span><span class="unit-input"><input class="num-input" data-f="plate" type="text" inputmode="decimal" value="${val(w.plate)}" placeholder="${ph(pv && pv.plate, '0')}"><em>kg</em></span></label>
-        <span class="v2-op">×</span>
-        <label class="v2-f"><span>個数</span><span class="unit-input"><input class="num-input" data-f="count" type="text" inputmode="numeric" value="${val(w.count)}" placeholder="1"><em>個</em></span></label>
-      </div>
-      <div class="v2-row v2-reps">
-        <label class="v2-f"><span>回数</span><span class="unit-input"><input class="num-input" data-f="reps" type="text" inputmode="numeric" value="${val(w.reps)}" placeholder="${ph(pv && pv.reps, '0')}"><em>回</em></span></label>
-        <span class="v2-op">×</span>
-        <label class="v2-f"><span>セット数</span><span class="unit-input"><input class="num-input" data-f="setCount" type="text" inputmode="numeric" value="${val(w.setCount)}" placeholder="1"><em>セット</em></span></label>
+      ${w.bw ? '' : `<div class="eq-head"><span>重さ</span><div class="seg sm" role="group" aria-label="重さの入力方法">
+        <button class="seg-btn" data-split="1" aria-pressed="${!!w.split}">分ける</button><button class="seg-btn" data-split="0" aria-pressed="${!w.split}">まとめる</button></div></div>`}
+      <div class="eq${w.split && !w.bw ? ' eq-split' : ''}">
+        ${w.split && !w.bw ? `
+        <span class="eq-p">(</span>
+        <label class="eq-f"><span>初期</span><input class="num-input" data-f="base" type="text" inputmode="decimal" value="${val(w.base)}" placeholder="${ph(pv && pv.base, '0')}" aria-label="初期重量"></label>
+        <span class="eq-op">+</span>
+        <label class="eq-f"><span>追加</span><input class="num-input" data-f="plate" type="text" inputmode="decimal" value="${val(w.plate)}" placeholder="${ph(pv && pv.plate, '0')}" aria-label="追加ウェイト"></label>
+        <span class="eq-p">)</span>` : `
+        <label class="eq-f"><span>${w.bw ? '加重' : '重さ'}</span><input class="num-input" data-f="plate" type="text" inputmode="decimal" value="${val(w.plate)}" placeholder="${pv ? ph(fitSplit({ ...pv }, false, w.bw).plate, w.bw ? '0' : '0') : '0'}" aria-label="${w.bw ? '加重' : '重さ'}"></label>`}
+        <span class="eq-op">×</span>
+        <label class="eq-f"><span>回数</span><input class="num-input" data-f="reps" type="text" inputmode="numeric" value="${val(w.reps)}" placeholder="${ph(pv && pv.reps, '0')}" aria-label="回数"></label>
+        <span class="eq-op">×</span>
+        <label class="eq-f"><span>セット</span><input class="num-input" data-f="setCount" type="text" inputmode="numeric" value="${val(w.setCount)}" placeholder="1" aria-label="セット数"></label>
       </div>
       <div class="v2-assist" ${w.assist ? '' : 'hidden'}>
-        <label class="v2-f"><span>補助</span><span class="unit-input"><input class="num-input" data-f="assist" type="text" inputmode="decimal" value="${w.assist ? fmtN(w.assist) : ''}" placeholder="0"><em>kg</em></span></label>
-        <small>補助の分は計算から差し引きます</small>
+        <label class="eq-f"><span>補助</span><input class="num-input" data-f="assist" type="text" inputmode="decimal" value="${w.assist ? fmtN(w.assist) : ''}" placeholder="0" aria-label="補助の重さ"></label>
+        <small>入れた分は計算から差し引きます</small>
       </div>
       <p class="v2-calc" data-calc></p>
       <div class="v2-foot">
@@ -1210,7 +1240,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       const f = inp.dataset.f;
       inp.addEventListener('input', () => {
         let v = num(inp.value);
-        if ((f === 'count' || f === 'setCount' || f === 'reps') && v != null) v = Math.round(v);
+        if ((f === 'setCount' || f === 'reps') && v != null) v = Math.round(v);
         if (f === 'assist') v = v ?? 0;
         if (f === 'setCount' && v != null) v = Math.max(1, v);
         w[f] = v;
@@ -1218,10 +1248,18 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       });
       inp.addEventListener('focus', () => inp.select());
       inp.addEventListener('change', () => {
-        if (f === 'count' && w.count == null) { w.count = 1; inp.value = '1'; syncSets(w); save(); showCalc(); }
         if (f === 'setCount' && w.setCount == null) { w.setCount = 1; inp.value = '1'; syncSets(w); save(); updateSummary(); showCalc(); }
         checkMilestone();
       });
+    });
+    el.querySelectorAll('[data-split]').forEach(b => b.onclick = () => {
+      const split = b.dataset.split === '1';
+      if (split === !!w.split) return;
+      if (split) { w.base = null; } else fitSplit(w, false, w.bw);
+      w.split = split;
+      const m = data.menus.find(x => x.id === w.menuId);
+      if (m) m.split = split;  // 次からこのメニューはこの形で開く
+      syncSets(w); save(); renderLog();
     });
     const assistBtn = el.querySelector('[data-act="assist"]');
     assistBtn.onclick = () => {
@@ -1231,7 +1269,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     };
     const cp = el.querySelector('[data-act="copyprev"]');
     if (cp) cp.onclick = () => {
-      Object.assign(w, v2FromPrev(prev.w));
+      Object.assign(w, fitSplit(v2FromPrev(prev.w), w.split, w.bw));
       syncSets(w); save(); renderLog(); toast('前回の内容を入れました');
     };
     armDelete(el.querySelector('[data-act="delwo"]'), '削除する', () => {
@@ -1343,7 +1381,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   }
   $('dayMemo').addEventListener('input', e => { bodyInput(cur, 'memo', e.target.value); autoGrow(e.target); });
 
-  /* メニューを呼び出す */
+  /* 今日のメニューを追加 */
   $('callBtn').onclick = openCall;
   function openCall() {
     let filter = 'all';
@@ -1353,7 +1391,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 
     const draw = () => {
       if (!data.menus.length) {
-        openSheet(`<div class="sheet-head"><h2>メニューを呼び出す</h2></div>
+        openSheet(`<div class="sheet-head"><h2>メニューを追加</h2></div>
           <p class="empty">登録されたメニューがありません。<br>メニュータブで登録してください。</p>
           <button class="btn done" id="goMenu">メニュータブへ</button>`, s => {
           s.querySelector('#goMenu').onclick = () => { closeSheet(); switchTab('menu'); };
@@ -1378,7 +1416,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       });
       if (!list) list = '<p class="empty">この部位のメニューはまだありません。</p>';
       openSheet(`
-        <div class="sheet-head"><h2>メニューを呼び出す</h2><button class="del" id="closeS" aria-label="閉じる">${X_ICON}</button></div>
+        <div class="sheet-head"><h2>メニューを追加</h2><button class="del" id="closeS" aria-label="閉じる">${X_ICON}</button></div>
         <div class="chip-row">${chips}</div>
         <div class="pick-list">${list}</div>
         <div class="sheet-foot"><button class="btn done" id="addPicked" ${picked.length ? '' : 'disabled'}>${picked.length ? picked.length + '件を追加' : 'メニューを選んでください'}</button></div>`, s => {
@@ -1400,7 +1438,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
             const prev = lastRecord(m.id, cur);
             const w = {
               id: uid(), v: 2, menuId: m.id, catId: m.catId, name: m.name, cat: c.name, color: c.color, bw: !!m.bw,
-              base: null, plate: null, count: 1, reps: null,
+              base: null, plate: null, count: 1, reps: null, split: m.bw ? false : m.split !== false,
               setCount: prev ? v2FromPrev(prev.w).setCount : 3, assist: 0, sets: [], memo: ''
             };
             syncSets(w);
@@ -1748,7 +1786,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
         <div class="cat-head"><span class="dot"></span><b>${esc(c.name)}</b><span class="count">${ms.length}</span>
           <button class="edit-btn" aria-label="${esc(c.name)}を編集">${PENCIL}</button></div>
         ${ms.length ? `<ul class="menu-list">${ms.map(m => `<li><button class="menu-row" data-id="${m.id}"><span class="nm">${esc(m.name)}</span>${m.bw ? '<span class="tag">自重</span>' : ''}${CHEV}</button></li>`).join('')}</ul>` : ''}
-        <button class="add sm">＋ ${esc(c.name)}のメニューを追加</button>`;
+        <button class="add sm">＋ ${esc(c.name)}のメニューを登録</button>`;
       sec.querySelector('.edit-btn').onclick = () => editCat(c);
       sec.querySelectorAll('.menu-row').forEach(b => b.onclick = () => editMenu(data.menus.find(m => m.id === b.dataset.id)));
       sec.querySelector('.add').onclick = () => editMenu(null, c.id);
@@ -1760,7 +1798,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   function editMenu(m, catId) {
     let cat = m ? m.catId : catId;
     openSheet(`
-      <div class="sheet-head"><h2>${m ? 'メニューを編集' : 'メニューを追加'}</h2><button class="del" id="closeS" aria-label="閉じる">${X_ICON}</button></div>
+      <div class="sheet-head"><h2>${m ? 'メニューを編集' : 'メニューを登録'}</h2><button class="del" id="closeS" aria-label="閉じる">${X_ICON}</button></div>
       <label class="field"><span>名前</span><input class="text-input" id="fName" type="text" maxlength="40" placeholder="例:インクラインダンベルプレス" value="${m ? esc(m.name) : ''}"></label>
       <p class="err" id="fErr" hidden>名前を入力してください</p>
       <div class="field"><span>部位</span><div class="chip-wrap" id="fCats">${data.categories.map(c => `<button class="chip-btn" data-id="${c.id}" aria-pressed="${c.id === cat}" style="--c:${col(c.color)}"><span class="dot"></span>${esc(c.name)}</button>`).join('')}</div></div>
@@ -1782,7 +1820,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
         if (m) Object.assign(m, { name, catId: cat, bw });
         else data.menus.push({ id: uid(), name, catId: cat, bw });
         save(); closeSheet(); renderMenus();
-        toast(m ? '保存しました' : `「${name}」を追加しました`);
+        toast(m ? '保存しました' : `「${name}」を登録しました`);
       };
       if (m) armDelete(s.querySelector('#fDel'), 'もう一度押すと削除', () => {
         data.menus = data.menus.filter(x => x.id !== m.id);
