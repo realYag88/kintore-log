@@ -1313,13 +1313,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     el.querySelector('[data-act="assist"]').onclick = () => {
       if (assistOpen) { w.assist = 0; w._assistOpen = false; syncSets(w); save(); renderLog(); return; }
       w._assistOpen = true; renderLog();
-      $('workouts').children[wi]?.querySelector('[data-f="assist"]')?.focus();
     };
     el.querySelector('[data-act="memo"]').onclick = () => {
       if (memoOpen && !(w.memo || '').trim()) { w._memoOpen = false; renderLog(); return; }
-      if (memoOpen) { el.querySelector('.memo').focus(); return; }
+      if (memoOpen) return;
       w._memoOpen = true; renderLog();
-      $('workouts').children[wi]?.querySelector('.memo')?.focus();
     };
     const cp = el.querySelector('[data-act="copyprev"]');
     if (cp) cp.onclick = () => {
