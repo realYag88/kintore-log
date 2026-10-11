@@ -251,6 +251,31 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .set-h span { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); }
 .set-h i { font-style: normal; font-size: 10px; margin-left: 2px; }
 .set .no { text-align: center; font-family: var(--font-num); font-weight: 800; color: var(--muted); font-size: 14px; }
+.v2-row { display: grid; align-items: end; gap: 6px; }
+.v2-load { grid-template-columns: minmax(0, 1.1fr) 14px minmax(0, 1.1fr) 14px minmax(0, .8fr); }
+.v2-reps { grid-template-columns: minmax(0, 1fr) 14px minmax(0, 1fr); }
+.v2-f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.v2-f > span:first-child { font-size: 12px; font-weight: 700; color: var(--muted); padding-left: 4px; }
+.v2-f .unit-input .num-input { height: 44px; padding-right: 26px; padding-left: 6px; }
+.v2-f .unit-input em { right: 8px; font-size: 11px; }
+.v2-reps .v2-f .unit-input .num-input { padding-right: 40px; }
+.v2-op { text-align: center; font-family: var(--font-num); font-weight: 800; color: var(--muted); line-height: 44px; }
+.v2-static { height: 44px; border-radius: 14px; background: var(--surface-2); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+.v2-assist { display: flex; align-items: end; gap: 10px; }
+.v2-assist .v2-f { width: 110px; flex-shrink: 0; }
+.v2-assist small { font-size: 12px; color: var(--muted); font-weight: 700; padding-bottom: 12px; }
+.v2-calc {
+  margin: 0;
+  background: var(--bg); border-radius: 14px;
+  padding: 10px 12px;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 4px 10px; flex-wrap: wrap;
+  font-size: 13px; color: var(--muted); font-weight: 700;
+  font-family: var(--font-num), var(--font-ui); font-variant-numeric: tabular-nums;
+}
+.v2-calc b { color: var(--fg); font-family: var(--font-num); font-weight: 800; font-size: 18px; }
+.v2-calc small { flex-basis: 100%; font-size: 11.5px; }
+.v2-foot { display: flex; justify-content: flex-end; margin: -6px 0 -4px; }
+.v2-foot .link-btn { font-size: 12px; }
 .wo-total {
   margin: 0;
   display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
@@ -913,6 +938,36 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     if (d && !hasTrain(d) && !hasBody(d) && !d.start) delete data.days[k];
   }
   const filledSets = w => w.sets.filter(s => s.weight != null || s.reps != null);
+  /* 新しい記録の形(v2):初期重量 + プレート × 個数 を 回数 × セット数。
+     計算やカレンダーは今まで通り sets を見るので、入力のたびに sets を作り直す */
+  function syncSets(w) {
+    const cnt = w.count ?? 1;
+    const plates = (w.plate || 0) * cnt;
+    const typed = w.reps != null || w.plate != null || (!w.bw && w.base != null);
+    const weight = !typed ? null : w.bw ? (w.plate != null ? plates : null) : (w.base || 0) + plates;
+    const n = Math.max(1, Math.round(w.setCount || 1));
+    w.sets = Array.from({ length: n }, () => ({ weight, reps: w.reps ?? null, assist: w.assist || 0 }));
+  }
+  const loadOf = w => (w.bw ? 0 : (w.base || 0)) + (w.plate || 0) * (w.count ?? 1);
+  // 「45kg + 20kg×4 × 10回 × 3セット」
+  function v2Text(w) {
+    const cnt = w.count ?? 1;
+    const plate = w.plate ? `${fmtN(w.plate)}kg${cnt !== 1 ? '×' + fmtN(cnt) : ''}` : '';
+    let wt;
+    if (w.bw) wt = plate ? `自重 + ${plate}` : '自重';
+    else wt = [w.base ? `${fmtN(w.base)}kg` : '', plate].filter(Boolean).join(' + ') || '0kg';
+    const r = w.reps != null ? ` × ${fmtN(w.reps)}回` : '';
+    const sc = ` × ${fmtN(w.setCount || 1)}セット`;
+    const a = w.assist ? `(補助${fmtN(w.assist)}kg)` : '';
+    return wt + r + sc + a;
+  }
+  const recordText = w => w.v === 2 ? v2Text(w) : filledSets(w).map(s => setText(s, w.bw)).join('、');
+  // 前回の記録(古い形でも)から v2 の値を作る
+  function v2FromPrev(pw) {
+    if (pw.v === 2) return { base: pw.base ?? null, plate: pw.plate ?? null, count: pw.count ?? 1, reps: pw.reps ?? null, setCount: pw.setCount || 1, assist: pw.assist || 0 };
+    const fs = filledSets(pw), f = fs[0] || emptySet();
+    return { base: null, plate: f.weight ?? null, count: 1, reps: f.reps ?? null, setCount: fs.length || 1, assist: f.assist || 0 };
+  }
   function lastRecord(menuId, before) {
     const keys = Object.keys(data.days).filter(k => k < before).sort().reverse();
     for (const k of keys) {
@@ -1094,10 +1149,101 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     const box = $('workouts');
     box.innerHTML = '';
     if (!n) box.innerHTML = '<p class="empty">まだメニューがありません。<br>下のボタンからやるメニューを呼び出してください。</p>';
-    else d.workouts.forEach((w, i) => box.appendChild(woCard(d, w, i)));
+    else d.workouts.forEach((w, i) => box.appendChild(w.v === 2 ? woCardV2(d, w, i) : woCard(d, w, i)));
 
     $('dayMemo').value = d?.body.memo || '';
     autoGrow($('dayMemo'));
+  }
+
+  function woCardV2(day, w, wi) {
+    const el = document.createElement('article');
+    el.className = 'card';
+    el.style.setProperty('--c', col(w.color));
+    const prev = lastRecord(w.menuId, cur);
+    const pv = prev ? v2FromPrev(prev.w) : null;
+    const ph = (v, d) => v != null ? fmtN(v) : d;
+    const val = v => v != null ? fmtN(v) : '';
+    el.innerHTML = `
+      <div class="wo-head">
+        <span class="dot"></span>
+        <div class="wo-title"><b>${esc(w.name)}</b><small>${esc(w.cat)}${w.bw ? '・自重' : ''}</small></div>
+        <button class="confirm-del" data-act="delwo" aria-label="${esc(w.name)}を削除">${X_ICON}</button>
+      </div>
+      ${prev ? `<p class="prev"><span>前回 ${shortLabel(prev.key)}:${esc(recordText(prev.w))}</span><button class="link-btn" data-act="copyprev">前回をコピー</button></p>` : ''}
+      <div class="v2-row v2-load">
+        <label class="v2-f">${w.bw ? '<span>本体</span><span class="v2-static">自重</span>' : `<span>初期重量</span><span class="unit-input"><input class="num-input" data-f="base" type="text" inputmode="decimal" value="${val(w.base)}" placeholder="${ph(pv && pv.base, '0')}"><em>kg</em></span>`}</label>
+        <span class="v2-op">+</span>
+        <label class="v2-f"><span>${w.bw ? '加重' : 'ウェイト'}</span><span class="unit-input"><input class="num-input" data-f="plate" type="text" inputmode="decimal" value="${val(w.plate)}" placeholder="${ph(pv && pv.plate, '0')}"><em>kg</em></span></label>
+        <span class="v2-op">×</span>
+        <label class="v2-f"><span>個数</span><span class="unit-input"><input class="num-input" data-f="count" type="text" inputmode="numeric" value="${val(w.count)}" placeholder="1"><em>個</em></span></label>
+      </div>
+      <div class="v2-row v2-reps">
+        <label class="v2-f"><span>回数</span><span class="unit-input"><input class="num-input" data-f="reps" type="text" inputmode="numeric" value="${val(w.reps)}" placeholder="${ph(pv && pv.reps, '0')}"><em>回</em></span></label>
+        <span class="v2-op">×</span>
+        <label class="v2-f"><span>セット数</span><span class="unit-input"><input class="num-input" data-f="setCount" type="text" inputmode="numeric" value="${val(w.setCount)}" placeholder="1"><em>セット</em></span></label>
+      </div>
+      <div class="v2-assist" ${w.assist ? '' : 'hidden'}>
+        <label class="v2-f"><span>補助</span><span class="unit-input"><input class="num-input" data-f="assist" type="text" inputmode="decimal" value="${w.assist ? fmtN(w.assist) : ''}" placeholder="0"><em>kg</em></span></label>
+        <small>補助の分は計算から差し引きます</small>
+      </div>
+      <p class="v2-calc" data-calc></p>
+      <div class="v2-foot">
+        <button class="link-btn" data-act="assist" ${w.assist ? 'hidden' : ''}>補助を入れる</button>
+      </div>
+      <textarea class="memo" rows="1" placeholder="メモ(フォーム・感覚など)" aria-label="${esc(w.name)}のメモ"></textarea>`;
+
+    const calcEl = el.querySelector('[data-calc]');
+    const showCalc = () => {
+      const ser = weightSeries();
+      if (!filledSets(w).length) { calcEl.innerHTML = '<span>入力すると、ここに総重量が出ます</span>'; return; }
+      const sc = w.setCount || 1;
+      const load = w.bw
+        ? (ser.length ? `${fmtN(bodyAt(cur, ser) + loadOf(w))}kg` : `${fmtN(loadOf(w))}kg`)
+        : `${fmtN(loadOf(w))}kg`;
+      const reps = w.reps != null ? fmtN(w.reps) : '0';
+      const noBody = w.bw && !ser.length;
+      calcEl.innerHTML = `<span>${load} × ${reps}回 × ${fmtN(sc)}セット${w.assist ? ` − 補助${fmtN(w.assist)}kg分` : ''}</span><b>= ${massText(workoutVolume(w, cur, ser))}</b>${noBody ? '<small>カラダタブで体重を入れると、自重の分も計算に入ります</small>' : ''}`;
+    };
+    showCalc();
+
+    el.querySelectorAll('input[data-f]').forEach(inp => {
+      const f = inp.dataset.f;
+      inp.addEventListener('input', () => {
+        let v = num(inp.value);
+        if ((f === 'count' || f === 'setCount' || f === 'reps') && v != null) v = Math.round(v);
+        if (f === 'assist') v = v ?? 0;
+        if (f === 'setCount' && v != null) v = Math.max(1, v);
+        w[f] = v;
+        syncSets(w); save(); updateSummary(); showCalc();
+      });
+      inp.addEventListener('focus', () => inp.select());
+      inp.addEventListener('change', () => {
+        if (f === 'count' && w.count == null) { w.count = 1; inp.value = '1'; syncSets(w); save(); showCalc(); }
+        if (f === 'setCount' && w.setCount == null) { w.setCount = 1; inp.value = '1'; syncSets(w); save(); updateSummary(); showCalc(); }
+        checkMilestone();
+      });
+    });
+    const assistBtn = el.querySelector('[data-act="assist"]');
+    assistBtn.onclick = () => {
+      el.querySelector('.v2-assist').hidden = false;
+      assistBtn.hidden = true;
+      el.querySelector('[data-f="assist"]').focus();
+    };
+    const cp = el.querySelector('[data-act="copyprev"]');
+    if (cp) cp.onclick = () => {
+      Object.assign(w, v2FromPrev(prev.w));
+      syncSets(w); save(); renderLog(); toast('前回の内容を入れました');
+    };
+    armDelete(el.querySelector('[data-act="delwo"]'), '削除する', () => {
+      day.workouts.splice(wi, 1);
+      if (!day.workouts.length) day.start = '';
+      cleanDay(cur); save(); renderLog();
+    });
+    const memo = el.querySelector('.memo');
+    memo.value = w.memo || '';
+    memo.addEventListener('input', () => { w.memo = memo.value; autoGrow(memo); save(); });
+    requestAnimationFrame(() => autoGrow(memo));
+    return el;
   }
 
   function woCard(day, w, wi) {
@@ -1112,11 +1258,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
         <div class="wo-title"><b>${esc(w.name)}</b><small>${esc(w.cat)}${w.bw ? '・自重' : ''}</small></div>
         <button class="confirm-del" data-act="delwo" aria-label="${esc(w.name)}を削除">${X_ICON}</button>
       </div>
-      ${prev ? `<p class="prev"><span>前回 ${shortLabel(prev.key)}:${esc(prevSets.map(s => setText(s, prev.w.bw)).join('、'))}</span><button class="link-btn" data-act="copyprev">前回をコピー</button></p>` : ''}
+      ${prev ? `<p class="prev"><span>前回 ${shortLabel(prev.key)}:${esc(recordText(prev.w))}</span><button class="link-btn" data-act="copyprev">前回をコピー</button></p>` : ''}
       <div class="sets">
         <div class="set set-h"><span>#</span><span>${w.bw ? '加重' : '重さ'}<i>kg</i></span><span>回数</span><span>補助<i>kg</i></span><span></span></div>
       </div>
-      <p class="wo-total" data-total></p>
+      <p class="wo-total" data-total hidden></p>
       <button class="add-set" data-act="addset">＋ セット追加</button>
       <textarea class="memo" rows="1" placeholder="メモ(フォーム・感覚など)" aria-label="${esc(w.name)}のメモ"></textarea>`;
     const totalEl = el.querySelector('[data-total]');
@@ -1252,11 +1398,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
             const m = data.menus.find(x => x.id === id); if (!m) return;
             const c = catOf(m.catId) || { name: '', color: 0 };
             const prev = lastRecord(m.id, cur);
-            const n = prev ? filledSets(prev.w).length : 1;
-            day.workouts.push({
-              id: uid(), menuId: m.id, catId: m.catId, name: m.name, cat: c.name, color: c.color, bw: !!m.bw,
-              sets: Array.from({ length: Math.max(1, n) }, emptySet), memo: ''
-            });
+            const w = {
+              id: uid(), v: 2, menuId: m.id, catId: m.catId, name: m.name, cat: c.name, color: c.color, bw: !!m.bw,
+              base: null, plate: null, count: 1, reps: null,
+              setCount: prev ? v2FromPrev(prev.w).setCount : 3, assist: 0, sets: [], memo: ''
+            };
+            syncSets(w);
+            day.workouts.push(w);
           });
           if (!day.start && cur === today()) day.start = nowHM();
           save(); closeSheet(); renderLog();
@@ -1563,7 +1711,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
         const v = workoutVolume(w, k, ser);
         return `<div class="day-wo" style="--c:${col(w.color)}">
           <div class="day-wo-head"><span class="dot"></span>${esc(w.name)}<small>${esc(w.cat)}</small>${fs.length ? `<span class="day-wo-vol">${massText(v)}</span>` : ''}</div>
-          ${fs.length ? `<ul class="set-list">${fs.map(s => `<li>${esc(setText(s, w.bw))}</li>`).join('')}</ul>` : '<p class="note">セットの記録なし</p>'}
+          ${!fs.length ? '<p class="note">記録なし</p>' : w.v === 2 ? `<ul class="set-list"><li>${esc(v2Text(w))}</li></ul>` : `<ul class="set-list">${fs.map(s => `<li>${esc(setText(s, w.bw))}</li>`).join('')}</ul>`}
           ${w.memo ? `<p class="note">${esc(w.memo)}</p>` : ''}
         </div>`;
       }).join('');
