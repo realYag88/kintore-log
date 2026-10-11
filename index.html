@@ -255,7 +255,15 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .eq-head > span { font-size: 12px; font-weight: 700; color: var(--muted); padding-left: 4px; }
 .seg.sm { padding: 2px; }
 .seg.sm .seg-btn { min-height: 30px; padding: 0 12px; font-size: 12px; }
+.eq-rows { display: flex; flex-direction: column; gap: 8px; }
 .eq { display: flex; align-items: flex-end; gap: 4px; }
+.eq-del { flex: 0 0 28px; height: 46px; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 0; }
+.eq-del svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+.eq-tools { display: flex; align-items: center; gap: 8px; }
+.assist-btn { width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--surface-2); color: var(--muted); display: grid; place-items: center; padding: 0; }
+.assist-btn svg { width: 21px; height: 21px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.assist-btn[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.calc-lines { display: flex; flex-direction: column; gap: 2px; }
 .eq-f { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .eq-f > span { font-size: 12px; font-weight: 700; color: var(--muted); text-align: center; white-space: nowrap; }
 .eq-f .num-input { height: 46px; font-size: 18px; padding: 0 2px; }
@@ -286,8 +294,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 }
 .v2-calc b { color: var(--fg); font-family: var(--font-num); font-weight: 800; font-size: 18px; }
 .v2-calc small { flex-basis: 100%; font-size: 11.5px; }
-.v2-foot { display: flex; justify-content: flex-end; margin: -6px 0 -4px; }
-.v2-foot .link-btn { font-size: 12px; }
 .wo-total {
   margin: 0;
   display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
@@ -932,7 +938,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     try { const v = JSON.parse(localStorage.getItem(KEY)); if (valid(v)) return migrate(v); } catch {}
     return migrate(defaults());
   }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {} }
+  const noUi = (k, v) => (k.startsWith('_') ? undefined : v);
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(data, noUi)); } catch {} }
   let data = load();
   save();
   try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch {}
@@ -950,48 +957,62 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     if (d && !hasTrain(d) && !hasBody(d) && !d.start) delete data.days[k];
   }
   const filledSets = w => w.sets.filter(s => s.weight != null || s.reps != null);
-  /* 新しい記録の形(v2):初期重量 + プレート × 個数 を 回数 × セット数。
+  /* 新しい記録の形(v2):行ごとに ( 初期重量 + 追加 ) × 回数 × セット数。補助はカードに1つ。
      計算やカレンダーは今まで通り sets を見るので、入力のたびに sets を作り直す */
-  function syncSets(w) {
+  const fix2 = n => +(+n).toFixed(2);
+  // 行の一覧(古いv2の「個数」付きは 追加×個数 にまとめる)
+  function rowsOf(w) {
+    if (Array.isArray(w.rows)) return w.rows;
     const cnt = w.count ?? 1;
-    const plates = (w.plate || 0) * cnt;
-    const typed = w.reps != null || w.plate != null || (!w.bw && w.base != null);
-    const weight = !typed ? null : w.bw ? (w.plate != null ? plates : null) : (w.base || 0) + plates;
-    const n = Math.max(1, Math.round(w.setCount || 1));
-    w.sets = Array.from({ length: n }, () => ({ weight, reps: w.reps ?? null, assist: w.assist || 0 }));
+    return [{ base: w.base ?? null, plate: w.plate != null ? fix2(w.plate * cnt) : null, reps: w.reps ?? null, setCount: w.setCount || 1 }];
   }
-  const loadOf = w => (w.bw ? 0 : (w.base || 0)) + (w.plate || 0) * (w.count ?? 1);
-  // 「45kg + 20kg×4 × 10回 × 3セット」
-  function v2Text(w) {
-    const cnt = w.count ?? 1;
-    const plate = w.plate ? `${fmtN(w.plate)}kg${cnt !== 1 ? '×' + fmtN(cnt) : ''}` : '';
+  function ensureRows(w) {
+    if (!Array.isArray(w.rows)) {
+      w.rows = rowsOf(w);
+      delete w.base; delete w.plate; delete w.count; delete w.reps; delete w.setCount;
+    }
+  }
+  const rowTyped = (r, bw) => r.reps != null || r.plate != null || (!bw && r.base != null);
+  const rowLoad = (r, bw) => (bw ? 0 : (r.base || 0)) + (r.plate || 0);
+  function syncSets(w) {
+    w.sets = [];
+    rowsOf(w).forEach(r => {
+      const typed = rowTyped(r, w.bw);
+      const weight = !typed ? null : w.bw ? (r.plate != null ? r.plate : null) : rowLoad(r, w.bw);
+      const n = Math.max(1, Math.round(r.setCount || 1));
+      for (let i = 0; i < n; i++) w.sets.push({ weight, reps: r.reps ?? null, assist: w.assist || 0 });
+    });
+  }
+  // 「45kg + 80kg × 10回 × 3セット」
+  function rowText(r, bw) {
     let wt;
-    if (w.bw) wt = plate ? `自重 + ${plate}` : '自重';
-    else wt = [w.base ? `${fmtN(w.base)}kg` : '', plate].filter(Boolean).join(' + ') || '0kg';
-    const r = w.reps != null ? ` × ${fmtN(w.reps)}回` : '';
-    const sc = ` × ${fmtN(w.setCount || 1)}セット`;
-    const a = w.assist ? `(補助${fmtN(w.assist)}kg)` : '';
-    return wt + r + sc + a;
+    if (bw) wt = r.plate ? `自重 + ${fmtN(r.plate)}kg` : '自重';
+    else wt = [r.base ? `${fmtN(r.base)}kg` : '', r.plate ? `${fmtN(r.plate)}kg` : ''].filter(Boolean).join(' + ') || '0kg';
+    return wt + (r.reps != null ? ` × ${fmtN(r.reps)}回` : '') + ` × ${fmtN(r.setCount || 1)}セット`;
+  }
+  function v2Text(w) {
+    const rows = rowsOf(w).filter(r => rowTyped(r, w.bw));
+    return (rows.length ? rows : rowsOf(w)).map(r => rowText(r, w.bw)).join('、') + (w.assist ? `(補助${fmtN(w.assist)}kg)` : '');
   }
   const recordText = w => w.v === 2 ? v2Text(w) : filledSets(w).map(s => setText(s, w.bw)).join('、');
-  // 前回の記録(古い形でも)から v2 の値を作る
-  function normCount(w) {
-    if (w.count != null && w.count !== 1) { if (w.plate != null) w.plate = +(w.plate * w.count).toFixed(2); w.count = 1; }
+  // 「分ける / まとめる」に合わせて値を寄せる(合計は変えない)
+  function fitRow(r, split, bw) {
+    if (bw || split) return r;
+    if (r.base != null || r.plate != null) r.plate = fix2((r.base || 0) + (r.plate || 0));
+    r.base = null;
+    return r;
   }
-  // 「分ける / まとめる」の切り替えに合わせて値を寄せる(合計は変えない)
-  function fitSplit(o, split, bw) {
-    if (bw || split) return o;
-    if (o.base != null || o.plate != null) o.plate = +((o.base || 0) + (o.plate || 0)).toFixed(2);
-    o.base = null;
-    return o;
-  }
+  // 前回の記録(古い形でも)から行と補助を作る
   function v2FromPrev(pw) {
-    if (pw.v === 2) {
-      const cnt = pw.count ?? 1;
-      return { base: pw.base ?? null, plate: pw.plate != null ? +(pw.plate * cnt).toFixed(2) : null, count: 1, reps: pw.reps ?? null, setCount: pw.setCount || 1, assist: pw.assist || 0 };
-    }
-    const fs = filledSets(pw), f = fs[0] || emptySet();
-    return { base: null, plate: f.weight ?? null, count: 1, reps: f.reps ?? null, setCount: fs.length || 1, assist: f.assist || 0 };
+    if (pw.v === 2) return { rows: rowsOf(pw).filter(r => rowTyped(r, pw.bw)).map(r => ({ ...r })), assist: pw.assist || 0 };
+    const rows = [];
+    filledSets(pw).forEach(st => {
+      const last = rows[rows.length - 1];
+      if (last && last.plate === (st.weight ?? null) && last.reps === (st.reps ?? null)) last.setCount++;
+      else rows.push({ base: null, plate: st.weight ?? null, reps: st.reps ?? null, setCount: 1 });
+    });
+    const f = filledSets(pw)[0];
+    return { rows, assist: f ? f.assist || 0 : 0 };
   }
   function lastRecord(menuId, before) {
     const keys = Object.keys(data.days).filter(k => k < before).sort().reverse();
@@ -1180,16 +1201,42 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     autoGrow($('dayMemo'));
   }
 
+  const HAND = '<svg viewBox="0 0 24 24"><circle cx="12" cy="6.5" r="2.6"/><path d="M3 14.5h3.2l4.6 2.6c.5.3 1.1.3 1.6.1L21 13.6"/><path d="M6.2 14.5v-1.2c0-.6.5-1.1 1.1-1.1h4.9a1.6 1.6 0 0 1 0 3.2H9.4"/></svg>';
   function woCardV2(day, w, wi) {
+    ensureRows(w);
+    if (w.split == null) w.split = !w.bw;
+    const split = w.split && !w.bw;
     const el = document.createElement('article');
     el.className = 'card';
     el.style.setProperty('--c', col(w.color));
-    normCount(w);
-    if (w.split == null) w.split = !w.bw;
     const prev = lastRecord(w.menuId, cur);
     const pv = prev ? v2FromPrev(prev.w) : null;
+    const pvRows = pv ? pv.rows.map(r => fitRow({ ...r }, split, w.bw)) : [];
     const ph = (v, d) => v != null ? fmtN(v) : d;
     const val = v => v != null ? fmtN(v) : '';
+    const multi = w.rows.length > 1;
+    const assistOpen = !!w.assist || !!w._assistOpen;
+
+    const rowHtml = (r, i) => {
+      const p = pvRows[i] || pvRows[pvRows.length - 1] || {};
+      const lab = t => i === 0 ? `<span>${t}</span>` : '';
+      const n = i + 1;
+      const weight = split ? `
+        <span class="eq-p">(</span>
+        <label class="eq-f">${lab('初期')}<input class="num-input" data-f="base" type="text" inputmode="decimal" value="${val(r.base)}" placeholder="${ph(p.base, '0')}" aria-label="${n}行目の初期重量"></label>
+        <span class="eq-op">+</span>
+        <label class="eq-f">${lab('追加')}<input class="num-input" data-f="plate" type="text" inputmode="decimal" value="${val(r.plate)}" placeholder="${ph(p.plate, '0')}" aria-label="${n}行目の追加ウェイト"></label>
+        <span class="eq-p">)</span>` : `
+        <label class="eq-f">${lab(w.bw ? '加重' : '重さ')}<input class="num-input" data-f="plate" type="text" inputmode="decimal" value="${val(r.plate)}" placeholder="${ph(p.plate, '0')}" aria-label="${n}行目の${w.bw ? '加重' : '重さ'}"></label>`;
+      return `<div class="eq${split ? ' eq-split' : ''}" data-row="${i}">${weight}
+        <span class="eq-op">×</span>
+        <label class="eq-f">${lab('回数')}<input class="num-input" data-f="reps" type="text" inputmode="numeric" value="${val(r.reps)}" placeholder="${ph(p.reps, '0')}" aria-label="${n}行目の回数"></label>
+        <span class="eq-op">×</span>
+        <label class="eq-f">${lab('セット')}<input class="num-input" data-f="setCount" type="text" inputmode="numeric" value="${val(r.setCount)}" placeholder="1" aria-label="${n}行目のセット数"></label>
+        ${multi ? `<button class="eq-del" data-act="delrow" aria-label="${n}行目を削除" ${i === 0 ? 'style="visibility:hidden" tabindex="-1"' : ''}>${X_ICON}</button>` : ''}
+      </div>`;
+    };
+
     el.innerHTML = `
       <div class="wo-head">
         <span class="dot"></span>
@@ -1197,79 +1244,80 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
         <button class="confirm-del" data-act="delwo" aria-label="${esc(w.name)}を削除">${X_ICON}</button>
       </div>
       ${prev ? `<p class="prev"><span>前回 ${shortLabel(prev.key)}:${esc(recordText(prev.w))}</span><button class="link-btn" data-act="copyprev">前回をコピー</button></p>` : ''}
-      ${w.bw ? '' : `<div class="eq-head"><span>重さ</span><div class="seg sm" role="group" aria-label="重さの入力方法">
-        <button class="seg-btn" data-split="1" aria-pressed="${!!w.split}">分ける</button><button class="seg-btn" data-split="0" aria-pressed="${!w.split}">まとめる</button></div></div>`}
-      <div class="eq${w.split && !w.bw ? ' eq-split' : ''}">
-        ${w.split && !w.bw ? `
-        <span class="eq-p">(</span>
-        <label class="eq-f"><span>初期</span><input class="num-input" data-f="base" type="text" inputmode="decimal" value="${val(w.base)}" placeholder="${ph(pv && pv.base, '0')}" aria-label="初期重量"></label>
-        <span class="eq-op">+</span>
-        <label class="eq-f"><span>追加</span><input class="num-input" data-f="plate" type="text" inputmode="decimal" value="${val(w.plate)}" placeholder="${ph(pv && pv.plate, '0')}" aria-label="追加ウェイト"></label>
-        <span class="eq-p">)</span>` : `
-        <label class="eq-f"><span>${w.bw ? '加重' : '重さ'}</span><input class="num-input" data-f="plate" type="text" inputmode="decimal" value="${val(w.plate)}" placeholder="${pv ? ph(fitSplit({ ...pv }, false, w.bw).plate, w.bw ? '0' : '0') : '0'}" aria-label="${w.bw ? '加重' : '重さ'}"></label>`}
-        <span class="eq-op">×</span>
-        <label class="eq-f"><span>回数</span><input class="num-input" data-f="reps" type="text" inputmode="numeric" value="${val(w.reps)}" placeholder="${ph(pv && pv.reps, '0')}" aria-label="回数"></label>
-        <span class="eq-op">×</span>
-        <label class="eq-f"><span>セット</span><input class="num-input" data-f="setCount" type="text" inputmode="numeric" value="${val(w.setCount)}" placeholder="1" aria-label="セット数"></label>
-      </div>
-      <div class="v2-assist" ${w.assist ? '' : 'hidden'}>
+      <div class="eq-head"><span>重さ</span><div class="eq-tools">
+        <button class="assist-btn" data-act="assist" aria-pressed="${assistOpen}" aria-label="補助">${HAND}</button>
+        ${w.bw ? '' : `<div class="seg sm" role="group" aria-label="重さの入力方法"><button class="seg-btn" data-split="1" aria-pressed="${split}">分ける</button><button class="seg-btn" data-split="0" aria-pressed="${!split}">まとめる</button></div>`}
+      </div></div>
+      <div class="eq-rows">${w.rows.map(rowHtml).join('')}</div>
+      <button class="add-set" data-act="addrow">＋ セットを追加</button>
+      <div class="v2-assist" ${assistOpen ? '' : 'hidden'}>
         <label class="eq-f"><span>補助</span><input class="num-input" data-f="assist" type="text" inputmode="decimal" value="${w.assist ? fmtN(w.assist) : ''}" placeholder="0" aria-label="補助の重さ"></label>
         <small>入れた分は計算から差し引きます</small>
       </div>
-      <p class="v2-calc" data-calc></p>
-      <div class="v2-foot">
-        <button class="link-btn" data-act="assist" ${w.assist ? 'hidden' : ''}>補助を入れる</button>
-      </div>
+      <p class="v2-calc" data-calc hidden></p>
       <textarea class="memo" rows="1" placeholder="メモ(フォーム・感覚など)" aria-label="${esc(w.name)}のメモ"></textarea>`;
 
     const calcEl = el.querySelector('[data-calc]');
     const showCalc = () => {
       const ser = weightSeries();
-      if (!filledSets(w).length) { calcEl.innerHTML = '<span>入力すると、ここに総重量が出ます</span>'; return; }
-      const sc = w.setCount || 1;
-      const load = w.bw
-        ? (ser.length ? `${fmtN(bodyAt(cur, ser) + loadOf(w))}kg` : `${fmtN(loadOf(w))}kg`)
-        : `${fmtN(loadOf(w))}kg`;
-      const reps = w.reps != null ? fmtN(w.reps) : '0';
+      if (!filledSets(w).length) { calcEl.hidden = true; return; }
+      const body = w.bw && ser.length ? bodyAt(cur, ser) : 0;
+      const lines = w.rows.filter(r => rowTyped(r, w.bw)).map(r =>
+        `<span>${fmtN(body + rowLoad(r, w.bw))}kg × ${r.reps != null ? fmtN(r.reps) : '0'}回 × ${fmtN(r.setCount || 1)}セット</span>`).join('');
       const noBody = w.bw && !ser.length;
-      calcEl.innerHTML = `<span>${load} × ${reps}回 × ${fmtN(sc)}セット${w.assist ? ` − 補助${fmtN(w.assist)}kg分` : ''}</span><b>= ${massText(workoutVolume(w, cur, ser))}</b>${noBody ? '<small>カラダタブで体重を入れると、自重の分も計算に入ります</small>' : ''}`;
+      calcEl.innerHTML = `<span class="calc-lines">${lines}${w.assist ? `<span>補助 −${fmtN(w.assist)}kg</span>` : ''}</span><b>= ${massText(workoutVolume(w, cur, ser))}</b>${noBody ? '<small>カラダタブで体重を入れると、自重の分も計算に入ります</small>' : ''}`;
+      calcEl.hidden = false;
     };
     showCalc();
 
     el.querySelectorAll('input[data-f]').forEach(inp => {
       const f = inp.dataset.f;
+      const rowEl = inp.closest('[data-row]');
+      const r = rowEl ? w.rows[+rowEl.dataset.row] : null;
       inp.addEventListener('input', () => {
         let v = num(inp.value);
         if ((f === 'setCount' || f === 'reps') && v != null) v = Math.round(v);
-        if (f === 'assist') v = v ?? 0;
         if (f === 'setCount' && v != null) v = Math.max(1, v);
-        w[f] = v;
+        if (f === 'assist') w.assist = v ?? 0; else r[f] = v;
         syncSets(w); save(); updateSummary(); showCalc();
       });
       inp.addEventListener('focus', () => inp.select());
       inp.addEventListener('change', () => {
-        if (f === 'setCount' && w.setCount == null) { w.setCount = 1; inp.value = '1'; syncSets(w); save(); updateSummary(); showCalc(); }
+        if (f === 'setCount' && r.setCount == null) { r.setCount = 1; inp.value = '1'; syncSets(w); save(); updateSummary(); showCalc(); }
         checkMilestone();
       });
     });
-    el.querySelectorAll('[data-split]').forEach(b => b.onclick = () => {
-      const split = b.dataset.split === '1';
-      if (split === !!w.split) return;
-      if (split) { w.base = null; } else fitSplit(w, false, w.bw);
-      w.split = split;
-      const m = data.menus.find(x => x.id === w.menuId);
-      if (m) m.split = split;  // 次からこのメニューはこの形で開く
+    el.querySelectorAll('[data-act="delrow"]').forEach(b => b.onclick = () => {
+      w.rows.splice(+b.closest('[data-row]').dataset.row, 1);
       syncSets(w); save(); renderLog();
     });
-    const assistBtn = el.querySelector('[data-act="assist"]');
-    assistBtn.onclick = () => {
-      el.querySelector('.v2-assist').hidden = false;
-      assistBtn.hidden = true;
-      el.querySelector('[data-f="assist"]').focus();
+    el.querySelector('[data-act="addrow"]').onclick = () => {
+      const last = w.rows[w.rows.length - 1];
+      w.rows.push(last ? { ...last } : { base: null, plate: null, reps: null, setCount: 1 });
+      syncSets(w); save(); renderLog();
+      const rows = $('workouts').children[wi]?.querySelectorAll('[data-row]');
+      const inp = rows && rows[rows.length - 1].querySelector(split ? '[data-f="plate"]' : '[data-f="plate"]');
+      inp && inp.focus();
+    };
+    el.querySelectorAll('[data-split]').forEach(b => b.onclick = () => {
+      const sp = b.dataset.split === '1';
+      if (sp === !!w.split) return;
+      w.rows.forEach(r => { if (sp) r.base = null; else fitRow(r, false, w.bw); });
+      w.split = sp;
+      const m = data.menus.find(x => x.id === w.menuId);
+      if (m) m.split = sp;  // 次からこのメニューはこの形で開く
+      syncSets(w); save(); renderLog();
+    });
+    el.querySelector('[data-act="assist"]').onclick = () => {
+      if (assistOpen) { w.assist = 0; w._assistOpen = false; syncSets(w); save(); renderLog(); return; }
+      w._assistOpen = true; renderLog();
+      $('workouts').children[wi]?.querySelector('[data-f="assist"]')?.focus();
     };
     const cp = el.querySelector('[data-act="copyprev"]');
     if (cp) cp.onclick = () => {
-      Object.assign(w, fitSplit(v2FromPrev(prev.w), w.split, w.bw));
+      const v = v2FromPrev(prev.w);
+      w.rows = v.rows.length ? v.rows.map(r => fitRow(r, split, w.bw)) : [{ base: null, plate: null, reps: null, setCount: 1 }];
+      w.assist = v.assist;
       syncSets(w); save(); renderLog(); toast('前回の内容を入れました');
     };
     armDelete(el.querySelector('[data-act="delwo"]'), '削除する', () => {
@@ -1438,8 +1486,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
             const prev = lastRecord(m.id, cur);
             const w = {
               id: uid(), v: 2, menuId: m.id, catId: m.catId, name: m.name, cat: c.name, color: c.color, bw: !!m.bw,
-              base: null, plate: null, count: 1, reps: null, split: m.bw ? false : m.split !== false,
-              setCount: prev ? v2FromPrev(prev.w).setCount : 3, assist: 0, sets: [], memo: ''
+              split: m.bw ? false : m.split !== false,
+              rows: [{ base: null, plate: null, reps: null, setCount: prev ? (v2FromPrev(prev.w).rows[0]?.setCount || 3) : 3 }],
+              assist: 0, sets: [], memo: ''
             };
             syncSets(w);
             day.workouts.push(w);
@@ -1885,7 +1934,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       <div class="stat"><b>${sets}</b><span>累計セット</span></div>
       <div class="stat"><b>${data.menus.length}</b><span>登録メニュー</span></div>`;
   }
-  const exportText = () => JSON.stringify(data, null, 2);
+  const exportText = () => JSON.stringify(data, noUi, 2);
   const isTouch = () => matchMedia('(pointer: coarse)').matches;
   function openSettings() {
     openSheet($('settingsTpl').innerHTML, s => {
