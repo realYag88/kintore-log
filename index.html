@@ -251,6 +251,14 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .set-h span { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); }
 .set-h i { font-style: normal; font-size: 10px; margin-left: 2px; }
 .set .no { text-align: center; font-family: var(--font-num); font-weight: 800; color: var(--muted); font-size: 14px; }
+.wo-total {
+  margin: 0;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  padding: 2px 4px 0 28px;
+  font-size: 13px; color: var(--muted); font-weight: 700;
+}
+.wo-total b { color: var(--fg); font-family: var(--font-num); font-weight: 800; font-size: 17px; font-variant-numeric: tabular-nums; }
+.wo-total small { font-size: 12px; }
 .add-set {
   min-height: 40px;
   border: none; border-radius: 999px;
@@ -309,6 +317,31 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .lg-body { width: 8px; height: 8px; border-radius: 2px; background: var(--lap-4); }
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .stats.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Lifted weight card */
+.lift { gap: 12px; }
+.lift-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.lift-main { display: flex; align-items: center; gap: 14px; }
+.emo {
+  width: 64px; height: 64px; flex-shrink: 0;
+  border-radius: 50%; background: var(--surface-2);
+  display: grid; place-items: center;
+  font-size: 36px; line-height: 1;
+}
+.lift-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lift-total { font-family: var(--font-num); font-weight: 800; font-size: 34px; line-height: 1.05; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.lift-total small { font-size: 15px; margin-left: 3px; letter-spacing: 0; }
+.lift-thing { font-weight: 700; font-size: 15px; overflow-wrap: anywhere; }
+.lift-thing small { display: block; font-size: 12px; color: var(--muted); font-weight: 700; }
+.lift-next { display: flex; flex-direction: column; gap: 6px; }
+.lift-next p { margin: 0; font-size: 13px; color: var(--muted); font-weight: 700; line-height: 1.5; }
+.lift-next p b { color: var(--fg); }
+.bar { height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; }
+.bar span { display: block; height: 100%; border-radius: 5px; background: var(--lap-1); width: var(--p, 0%); transition: width .5s ease; }
+.lift-foot { display: flex; flex-wrap: wrap; gap: 6px; }
+.lift-foot span { background: var(--bg); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; font-weight: 700; color: var(--muted); font-family: var(--font-num), var(--font-ui); font-variant-numeric: tabular-nums; }
+.lift-foot span b { color: var(--fg); }
+
 .stat { background: var(--surface); border-radius: 18px; padding: 10px 8px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
 .stat b { font-family: var(--font-num); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; }
 .stat b small { font-size: 12px; margin-left: 2px; }
@@ -380,6 +413,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .day-wo { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: var(--surface); border-radius: 18px; }
 .day-wo-head { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .day-wo-head small { color: var(--muted); font-size: 12px; }
+.day-wo-vol { margin-left: auto; font-family: var(--font-num); font-weight: 800; font-variant-numeric: tabular-nums; }
 .set-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .set-list li {
   background: var(--bg); border-radius: 999px;
@@ -541,6 +575,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 }
 @media (prefers-reduced-motion: reduce) {
   .sheet { animation: none; }
+  .bar span { transition: none; }
   .tab .ic, .switch, .switch::before { transition: none; }
 }
 </style>
@@ -569,7 +604,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       <span><i class="lg-body"></i>体重・メモあり</span>
       <span>下の点 = 鍛えた部位</span>
     </div>
-    <div class="stats two" id="calStats"></div>
+    <div class="card lift" id="liftCard"></div>
   </section>
 
   <!-- 記録 -->
@@ -890,7 +925,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     let wt;
     if (bw) wt = s.weight ? `自重+${fmtN(s.weight)}kg` : '自重';
     else wt = s.weight != null ? `${fmtN(s.weight)}kg` : '—';
-    const r = s.reps != null ? ` × ${fmtN(s.reps)}` : '';
+    const r = s.reps != null ? ` × ${fmtN(s.reps)}回` : '';
     const a = s.assist ? `(補助${fmtN(s.assist)}kg)` : '';
     return wt + r + a;
   }
@@ -920,13 +955,93 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     return { regions, cats };
   }
 
+  /* ---------- 持ち上げた重さ(重さ × 回数の合計) ---------- */
+  // 重さはおおよその目安
+  const THINGS = [
+    { e: '🌾', name: '米俵', kg: 60, u: '俵' },
+    { e: '🐼', name: 'ジャイアントパンダ', kg: 100, u: '頭' },
+    { e: '🦁', name: 'ライオン(オス)', kg: 190, u: '頭' },
+    { e: '🎹', name: 'グランドピアノ', kg: 320, u: '台' },
+    { e: '🐻‍❄️', name: 'ホッキョクグマ', kg: 500, u: '頭' },
+    { e: '🐄', name: '乳牛', kg: 650, u: '頭' },
+    { e: '🚗', name: '軽自動車', kg: 900, u: '台' },
+    { e: '🦒', name: 'キリン', kg: 1200, u: '頭' },
+    { e: '🦛', name: 'カバ', kg: 1500, u: '頭' },
+    { e: '🦏', name: 'シロサイ', kg: 2300, u: '頭' },
+    { e: '🐘', name: 'アフリカゾウ', kg: 6000, u: '頭' },
+    { e: '🦖', name: 'ティラノサウルス', kg: 8000, u: '体' },
+    { e: '🚌', name: '路線バス', kg: 10000, u: '台' },
+    { e: '🦈', name: 'ジンベエザメ', kg: 20000, u: '匹' },
+    { e: '🐋', name: 'ザトウクジラ', kg: 30000, u: '頭' },
+    { e: '🚂', name: 'D51 蒸気機関車', kg: 78000, u: '両' },
+    { e: '🐳', name: 'シロナガスクジラ', kg: 150000, u: '頭' },
+    { e: '✈️', name: 'ジャンボジェット', kg: 180000, u: '機' },
+    { e: '🛕', name: '奈良の大仏', kg: 250000, u: '体' }
+  ];
+  const nf = (n, d = 0) => n.toLocaleString('ja-JP', { minimumFractionDigits: d, maximumFractionDigits: d });
+  function mass(kg) {
+    return kg < 10000 ? { n: nf(Math.round(kg)), u: 'kg' } : { n: nf(kg / 1000, 1), u: 't' };
+  }
+  const massText = kg => { const m = mass(kg); return m.n + m.u; };
+  const approx = t => `約${t.kg < 1000 ? t.kg + 'kg' : nf(t.kg / 1000, t.kg % 1000 ? 1 : 0) + 't'}`;
+  const ratioText = (kg, t) => { const r = kg / t.kg; return nf(r, r >= 10 ? 0 : 1) + t.u + '分'; };
+  // 自重の種目は、その日以前で一番近い体重を使う
+  function weightSeries() {
+    return Object.keys(data.days).filter(isYmd).sort()
+      .map(k => ({ k, v: data.days[k].body.weight })).filter(p => p.v != null);
+  }
+  function bodyAt(k, ser) {
+    let v = null;
+    for (const p of ser) { if (p.k <= k) v = p.v; else break; }
+    return v ?? (ser[0] ? ser[0].v : 0);
+  }
+  // 1種目の総重量 = (重さ − 補助) × 回数 の合計。自重の種目は体重も足す
+  function workoutVolume(w, k, ser) {
+    const bodyKg = w.bw ? bodyAt(k, ser) : 0;
+    return w.sets.reduce((sum, st) => {
+      if (!st.reps) return sum;
+      return sum + Math.max(0, bodyKg + (st.weight || 0) - (st.assist || 0)) * st.reps;
+    }, 0);
+  }
+  function dayVolume(k, ser) {
+    const d = data.days[k]; if (!d) return 0;
+    return d.workouts.reduce((sum, w) => sum + workoutVolume(w, k, ser), 0);
+  }
+  // monthKey = 'YYYY-MM'。uptoDay を渡すとその日まで
+  function monthVolume(monthKey, ser, uptoDay) {
+    let sum = 0;
+    Object.keys(data.days).forEach(k => {
+      if (k.slice(0, 7) !== monthKey) return;
+      if (uptoDay && +k.slice(8) > uptoDay) return;
+      sum += dayVolume(k, ser);
+    });
+    return sum;
+  }
+  const reachedOf = kg => THINGS.filter(t => kg >= t.kg).pop() || null;
+  const nextOf = kg => THINGS.find(t => kg < t.kg) || null;
+
+  // 記録中に新しい重さを超えたらお知らせ
+  let monthBase = null;
+  function checkMilestone() {
+    const mk = cur.slice(0, 7);
+    const total = monthVolume(mk, weightSeries());
+    if (monthBase && monthBase.key === mk) {
+      const crossed = THINGS.filter(t => monthBase.total < t.kg && total >= t.kg).pop();
+      if (crossed) {
+        const when = mk === today().slice(0, 7) ? '今月' : `${+mk.slice(5)}月`;
+        toast(`${crossed.e} ${when}の合計が${crossed.name}1${crossed.u}分(${approx(crossed)})を超えました!`, 3500);
+      }
+    }
+    monthBase = { key: mk, total };
+  }
+
   /* ---------- 共通UI ---------- */
   let toastTimer = 0;
-  function toast(text) {
+  function toast(text, ms = 2000) {
     const t = $('toast');
     t.textContent = text; t.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { t.hidden = true; }, 2000);
+    toastTimer = setTimeout(() => { t.hidden = true; }, ms);
   }
   const scrim = $('scrim'), sheet = $('sheet');
   let onSheetClose = null;
@@ -964,6 +1079,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   let lastToday = today();
 
   function renderLog() {
+    checkMilestone();
     const t = today();
     $('dateLabel').textContent = dayLabel(cur);
     $('dateYear').textContent = cur.slice(0, 4) + '年';
@@ -1000,8 +1116,17 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       <div class="sets">
         <div class="set set-h"><span>#</span><span>${w.bw ? '加重' : '重さ'}<i>kg</i></span><span>回数</span><span>補助<i>kg</i></span><span></span></div>
       </div>
+      <p class="wo-total" data-total></p>
       <button class="add-set" data-act="addset">＋ セット追加</button>
       <textarea class="memo" rows="1" placeholder="メモ(フォーム・感覚など)" aria-label="${esc(w.name)}のメモ"></textarea>`;
+    const totalEl = el.querySelector('[data-total]');
+    const showTotal = () => {
+      const ser = weightSeries();
+      const n = filledSets(w).length;
+      const noBody = w.bw && !ser.length;
+      totalEl.innerHTML = `<span>総重量</span><b>${n ? massText(workoutVolume(w, cur, ser)) : '—'}</b><small>${n}セット${noBody ? '・体重を入れると自重分も入ります' : ''}</small>`;
+    };
+    showTotal();
 
     const setsBox = el.querySelector('.sets');
     w.sets.forEach((s, i) => {
@@ -1018,10 +1143,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
         inp.addEventListener('input', () => {
           const f = inp.dataset.f;
           s[f] = f === 'assist' ? (num(inp.value) ?? 0) : num(inp.value);
-          save(); updateSummary();
+          save(); updateSummary(); showTotal();
         });
         inp.addEventListener('focus', () => inp.select());
-        inp.addEventListener('change', () => { if (inp.dataset.f === 'assist' && inp.value === '') inp.value = '0'; });
+        inp.addEventListener('change', () => { if (inp.dataset.f === 'assist' && inp.value === '') inp.value = '0'; checkMilestone(); });
       });
       r.querySelector('[data-act="delset"]').onclick = () => { w.sets.splice(i, 1); save(); renderLog(); };
       setsBox.appendChild(r);
@@ -1375,24 +1500,69 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     }
     grid.innerHTML = html;
     grid.querySelectorAll('.cday').forEach(b => b.onclick = () => openDay(b.dataset.k));
-    $('calStats').innerHTML = `
-      <div class="stat"><b>${trainedDays}<small>日</small></b><span>トレーニング</span></div>
-      <div class="stat"><b>${sets}</b><span>合計セット</span></div>`;
+    renderLift(trainedDays, sets);
   }
   $('prevMonth').onclick = () => { calM--; if (calM < 0) { calM = 11; calY--; } renderCal(); };
   $('nextMonth').onclick = () => { calM++; if (calM > 11) { calM = 0; calY++; } renderCal(); };
   $('calTodayBtn').onclick = () => { resetMonth(); renderCal(); };
+
+  function renderLift(trainedDays, sets) {
+    const ser = weightSeries();
+    const mk = `${calY}-${pad(calM + 1)}`;
+    const tk = today().slice(0, 7);
+    const isCur = mk === tk, isFuture = mk > tk;
+    const total = monthVolume(mk, ser);
+    const pd = new Date(calY, calM - 1, 1);
+    const pmk = `${pd.getFullYear()}-${pad(pd.getMonth() + 1)}`;
+    // 今月は「先月の同じ日まで」と比べる
+    const upto = isCur ? Math.min(new Date().getDate(), new Date(calY, calM, 0).getDate()) : 0;
+    const prev = monthVolume(pmk, ser, upto || undefined);
+    const reached = reachedOf(total), next = nextOf(total);
+    const m = mass(total);
+    let main, nextHtml = '';
+    if (total > 0) {
+      main = `<span class="emo" aria-hidden="true">${reached ? reached.e : '🏋️'}</span>
+        <div class="lift-txt"><span class="lift-total">${m.n}<small>${m.u}</small></span>
+        <span class="lift-thing">${reached ? `${esc(reached.name)} ${ratioText(total, reached)}<small>1${reached.u} ${approx(reached)}</small>` : `<small>${THINGS[0].name}(${approx(THINGS[0])})まであと少し</small>`}</span></div>`;
+    } else {
+      main = `<span class="emo" aria-hidden="true">${isFuture ? '🗓️' : '🌱'}</span>
+        <div class="lift-txt"><span class="lift-total">0<small>kg</small></span>
+        <span class="lift-thing"><small>${isFuture ? 'まだ先の月です' : 'この月の記録はまだありません'}</small></span></div>`;
+    }
+    if (isCur && next) {
+      const base = reached ? reached.kg : 0;
+      const p = Math.max(2, Math.min(100, (total - base) / (next.kg - base) * 100));
+      nextHtml = `<div class="lift-next"><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p)}" aria-label="次の目標までの進み具合"><span style="--p:${p}%"></span></div>
+        <p>次は ${next.e} <b>${esc(next.name)}</b>(${approx(next)})まで あと <b>${massText(next.kg - total)}</b></p></div>`;
+    } else if (isCur && !next) {
+      nextHtml = `<div class="lift-next"><p>用意した重さをすべて超えました!</p></div>`;
+    }
+    let cmp = '';
+    if (!isFuture && (total > 0 || prev > 0)) {
+      const diff = total - prev;
+      const label = isCur ? '先月の同じ時期より' : '前の月より';
+      cmp = `<span>${label} <b>${diff >= 0 ? '+' : '−'}${massText(Math.abs(diff))}</b></span>`;
+    }
+    $('liftCard').innerHTML = `
+      <div class="lift-head"><h3>${isCur ? '今月' : `${calM + 1}月に`}持ち上げた重さ</h3></div>
+      <div class="lift-main">${main}</div>
+      ${nextHtml}
+      <div class="lift-foot"><span>トレーニング <b>${trainedDays}</b>日</span><span><b>${sets}</b>セット</span>${cmp}</div>`;
+  }
 
   function openDay(k) {
     const d = data.days[k];
     let body = '';
     if (hasTrain(d)) {
       const sc = d.workouts.reduce((a, w) => a + filledSets(w).length, 0);
-      body += `<p class="day-meta-line">${d.start ? '開始 ' + esc(d.start) + '・' : ''}${d.workouts.length}種目・${sc}セット</p>`;
+      const ser = weightSeries();
+      const dv = dayVolume(k, ser);
+      body += `<p class="day-meta-line">${d.start ? '開始 ' + esc(d.start) + '・' : ''}${d.workouts.length}種目・${sc}セット${dv ? '・総重量 ' + massText(dv) : ''}</p>`;
       body += d.workouts.map(w => {
         const fs = filledSets(w);
+        const v = workoutVolume(w, k, ser);
         return `<div class="day-wo" style="--c:${col(w.color)}">
-          <div class="day-wo-head"><span class="dot"></span>${esc(w.name)}<small>${esc(w.cat)}</small></div>
+          <div class="day-wo-head"><span class="dot"></span>${esc(w.name)}<small>${esc(w.cat)}</small>${fs.length ? `<span class="day-wo-vol">${massText(v)}</span>` : ''}</div>
           ${fs.length ? `<ul class="set-list">${fs.map(s => `<li>${esc(setText(s, w.bw))}</li>`).join('')}</ul>` : '<p class="note">セットの記録なし</p>'}
           ${w.memo ? `<p class="note">${esc(w.memo)}</p>` : ''}
         </div>`;

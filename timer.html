@@ -179,6 +179,32 @@ button:focus-visible, input:focus-visible, .stage:focus-visible {
   letter-spacing: -.02em;
 }
 .hint { font-size: 13px; color: var(--muted); }
+.mode-tag {
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px; font-weight: 700;
+}
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); border-radius: var(--radius); padding: 10px 14px; cursor: pointer; }
+.switch-row span { font-weight: 700; font-size: 14px; display: flex; flex-direction: column; gap: 2px; }
+.switch-row small { font-size: 12px; color: var(--muted); font-weight: 500; line-height: 1.5; }
+.switch {
+  -webkit-appearance: none; appearance: none;
+  width: 50px; height: 30px; flex-shrink: 0;
+  border-radius: 999px; background: var(--track);
+  position: relative; margin: 0; cursor: pointer;
+  transition: background .2s;
+}
+.switch::before {
+  content: ""; position: absolute; top: 3px; left: 3px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--surface); box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+  transition: transform .2s;
+}
+.switch:checked { background: var(--lap-1); }
+.switch:checked::before { transform: translateX(20px); }
 .stage.running .ring-wrap { animation: breathe 6s ease-in-out infinite; }
 @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.015); } }
 
@@ -372,6 +398,7 @@ button:focus-visible, input:focus-visible, .stage:focus-visible {
   .stage.running .ring-wrap { animation: none; }
   .sheet { animation: none; }
   .ring .bar, .lap-name { transition: none; }
+  .switch, .switch::before { transition: none; }
 }
 </style>
 
@@ -404,6 +431,7 @@ body { margin: 0; }
         <div class="lap-name" id="lapName">ラップ 1 / 2</div>
         <div class="time" id="time">30</div>
         <div class="hint" id="hint">タップでスタート</div>
+        <div class="mode-tag" id="modeTag" hidden>ラップごとに停止</div>
       </div>
     </div>
   </section>
@@ -438,6 +466,7 @@ body { margin: 0; }
       <button class="link-btn" id="resetPresets">初期に戻す</button>
     </div>
     <div class="saved-msg" id="savedMsg" hidden></div>
+    <label class="switch-row" for="stopEach"><span>ラップごとに止める<small>時間が来たら次のラップの頭で止まり、タップで次のラップを始めます</small></span><input type="checkbox" class="switch" id="stopEach"></label>
     <div class="rows" id="rows"></div>
     <button class="add" id="addBtn">＋ ラップを追加</button>
     <div class="total" id="total"></div>
@@ -472,8 +501,9 @@ body { margin: 0; }
   let PRESETS = load('presets', null);
   if (!Array.isArray(PRESETS) || PRESETS.length !== 2 || !PRESETS.every(validLaps)) PRESETS = DEFAULT_PRESETS.map(p => p.slice());
   let customizing = false;
+  let stopEach = load('stopEach', false) === true;
 
-  const st = { running: false, idx: 0, elapsed: 0, startedAt: 0, round: 1, lastTick: null, raf: 0 };
+  const st = { running: false, idx: 0, elapsed: 0, startedAt: 0, round: 1, lastTick: null, raf: 0, waiting: false };
 
   /* ---------- Audio: "ambient" session so music keeps playing ---------- */
   let ctx = null;
@@ -535,6 +565,12 @@ body { margin: 0; }
       if (st.idx === 0) st.round++;
       st.lastTick = null;
       changed = true;
+      if (stopEach) {
+        chime(st.idx); renderStrip();
+        st.running = false; st.elapsed = 0; st.waiting = true;
+        cancelAnimationFrame(st.raf); unlockScreen();
+        return;
+      }
     }
     if (changed) { chime(st.idx); renderStrip(); }
     const rem = laps[st.idx] - elapsedNow();
@@ -556,6 +592,7 @@ body { margin: 0; }
 
   function start() {
     ensureAudio();
+    st.waiting = false;
     st.running = true;
     st.startedAt = performance.now() - st.elapsed * 1000;
     st.lastTick = null;
@@ -570,7 +607,7 @@ body { margin: 0; }
   }
   function reset() {
     st.running = false; cancelAnimationFrame(st.raf); unlockScreen();
-    st.idx = 0; st.elapsed = 0; st.round = 1; st.lastTick = null;
+    st.idx = 0; st.elapsed = 0; st.round = 1; st.lastTick = null; st.waiting = false;
     renderStrip(); render();
   }
   function toggle() { st.running ? stop() : start(); }
@@ -592,7 +629,8 @@ body { margin: 0; }
     bar.style.strokeDasharray = CIRC;
     bar.style.strokeDashoffset = -CIRC * (el / dur);
     stage.classList.toggle('running', st.running);
-    hintEl.textContent = st.running ? 'タップで一時停止' : (st.elapsed > 0 ? 'タップで再開' : 'タップでスタート');
+    hintEl.textContent = st.running ? 'タップで一時停止' : st.waiting ? 'タップで次のラップへ' : (st.elapsed > 0 ? 'タップで再開' : 'タップでスタート');
+    $('modeTag').hidden = !stopEach;
   }
   function renderStrip() {
     strip.innerHTML = '';
@@ -756,6 +794,10 @@ body { margin: 0; }
       : '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/>';
   }
   soundBtn.addEventListener('click', () => { soundOn = !soundOn; save('sound', soundOn); renderSound(); if (soundOn) ensureAudio(); });
+
+  const stopEl = $('stopEach');
+  stopEl.checked = stopEach;
+  stopEl.addEventListener('change', () => { stopEach = stopEl.checked; save('stopEach', stopEach); render(); });
 
   renderSound(); renderVol(); renderStrip(); render();
 })();
