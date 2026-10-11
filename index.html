@@ -329,22 +329,25 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 }
 
 /* Calendar tab */
-.cal-head { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 10px; }
-.cal-head h2 { margin: 0; text-align: center; font-size: 18px; font-family: var(--font-num), var(--font-ui); font-weight: 800; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-head { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.cal-head h2 { margin: 0; text-align: center; font-size: 18px; font-family: var(--font-num), var(--font-ui); font-weight: 800; white-space: nowrap; min-width: 7.2em; }
+.nav-btn { width: 36px; height: 36px; border: none; border-radius: 50%; background: var(--surface); display: grid; place-items: center; padding: 0; flex-shrink: 0; }
+.nav-btn svg { width: 18px; height: 18px; stroke: var(--fg); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#v-cal { gap: 10px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
 .wd { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); padding-bottom: 2px; }
 .wd.sun { color: var(--lap-5); }
 .wd.sat { color: var(--lap-2); }
 .cday {
   position: relative;
   border: none; background: transparent;
-  border-radius: 14px;
-  min-height: 54px;
-  padding: 4px 0;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  border-radius: 12px;
+  min-height: 44px;
+  padding: 2px 0;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
 }
 .cday .n {
-  width: 32px; height: 32px; border-radius: 50%;
+  width: 30px; height: 30px; border-radius: 50%;
   display: grid; place-items: center;
   font-family: var(--font-num); font-weight: 700; font-size: 15px;
   font-variant-numeric: tabular-nums;
@@ -370,9 +373,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .stats.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 /* Lifted weight card */
-.lift { gap: 12px; }
-.lift-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.lift-main { display: flex; align-items: center; gap: 14px; }
+.lift { gap: 8px; padding: 10px 12px 12px; cursor: pointer; }
+.lift:active { transform: scale(.99); }
+.lift-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.lift-head svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.lift-main { display: flex; align-items: center; gap: 12px; }
+.lift .emo { width: 48px; height: 48px; font-size: 28px; }
+.lift-main .lift-txt { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; }
 .emo {
   width: 64px; height: 64px; flex-shrink: 0;
   border-radius: 50%; background: var(--surface-2);
@@ -380,18 +387,35 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   font-size: 36px; line-height: 1;
 }
 .lift-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.lift-total { font-family: var(--font-num); font-weight: 800; font-size: 34px; line-height: 1.05; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.lift-total { font-family: var(--font-num); font-weight: 800; font-size: 28px; line-height: 1.05; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 .lift-total small { font-size: 15px; margin-left: 3px; letter-spacing: 0; }
 .lift-thing { font-weight: 700; font-size: 15px; overflow-wrap: anywhere; }
 .lift-thing small { display: block; font-size: 12px; color: var(--muted); font-weight: 700; }
-.lift-next { display: flex; flex-direction: column; gap: 6px; }
-.lift-next p { margin: 0; font-size: 13px; color: var(--muted); font-weight: 700; line-height: 1.5; }
+.lift-next { display: flex; flex-direction: column; gap: 4px; }
+.lift-next p { margin: 0; font-size: 12.5px; color: var(--muted); font-weight: 700; line-height: 1.5; }
 .lift-next p b { color: var(--fg); }
 .bar { height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; }
 .bar span { display: block; height: 100%; border-radius: 5px; background: var(--lap-1); width: var(--p, 0%); transition: width .5s ease; }
-.lift-foot { display: flex; flex-wrap: wrap; gap: 6px; }
-.lift-foot span { background: var(--bg); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; font-weight: 700; color: var(--muted); font-family: var(--font-num), var(--font-ui); font-variant-numeric: tabular-nums; }
-.lift-foot span b { color: var(--fg); }
+.lift-foot { margin: 0; font-size: 12px; font-weight: 700; color: var(--muted); font-family: var(--font-num), var(--font-ui); font-variant-numeric: tabular-nums; }
+.lift-foot b { color: var(--fg); }
+.lift-foot-old span { background: var(--bg); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; font-weight: 700; color: var(--muted); font-family: var(--font-num), var(--font-ui); font-variant-numeric: tabular-nums; }
+/* Rate sheet */
+.rate-sum { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: -6px; font-size: 13px; color: var(--muted); font-weight: 700; }
+.rate-sum b { font-family: var(--font-num); font-weight: 800; font-size: 20px; color: var(--fg); }
+.rate { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rate li { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto 60px; align-items: center; gap: 8px; padding: 3px 4px; border-top: 1px solid var(--surface-2); font-size: 13.5px; font-weight: 700; }
+.rate li:first-child { border-top: none; }
+.rate .e { font-size: 17px; line-height: 1; text-align: center; }
+.rate .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rate .kg { color: var(--muted); font-size: 12.5px; font-family: var(--font-num), var(--font-ui); }
+.rate .x { text-align: right; font-family: var(--font-num), var(--font-ui); font-variant-numeric: tabular-nums; }
+.rate li.off { color: var(--muted); }
+.rate li.off .e { filter: grayscale(1); opacity: .4; }
+.rate li.off .x { font-weight: 600; }
+.rate li.now { background: var(--surface); border-radius: 10px; border-top-color: transparent; }
+.rate li.now + li { border-top-color: transparent; }
+.rate-legend { margin: 0; font-size: 12px; color: var(--muted); font-weight: 700; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.rate-legend span { display: inline-flex; align-items: center; gap: 5px; }
 
 .stat { background: var(--surface); border-radius: 18px; padding: 10px 8px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
 .stat b { font-family: var(--font-num); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; }
@@ -641,21 +665,15 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   <!-- カレンダー -->
   <section class="view" id="v-cal" role="tabpanel" aria-labelledby="t-cal" hidden>
     <header class="top">
-      <div class="brand-wrap"><span class="brand">カレンダー</span><span class="sub">日付をタップで振り返り</span></div>
+      <div class="cal-head">
+        <button class="nav-btn" id="prevMonth" aria-label="前の月"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <h2 id="calTitle"></h2>
+        <button class="nav-btn" id="nextMonth" aria-label="次の月"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
       <div class="top-actions"><button class="chip-btn" id="calTodayBtn">今月</button><button class="icon-btn sm" data-act="settings" aria-label="設定・データ"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
     </header>
-    <div class="cal-head">
-      <button class="icon-btn" id="prevMonth" aria-label="前の月"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
-      <h2 id="calTitle"></h2>
-      <button class="icon-btn" id="nextMonth" aria-label="次の月"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
-    </div>
     <div class="cal-grid" id="calGrid"></div>
-    <div class="legend">
-      <span><i class="lg-train"></i>トレーニングした日</span>
-      <span><i class="lg-body"></i>体重・メモあり</span>
-      <span>下の点 = 鍛えた部位</span>
-    </div>
-    <div class="card lift" id="liftCard"></div>
+    <div class="card lift" id="liftCard" role="button" tabindex="0" aria-label="重さのレート表を開く"></div>
   </section>
 
   <!-- 記録 -->
@@ -1764,7 +1782,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     if (total > 0) {
       main = `<span class="emo" aria-hidden="true">${reached ? reached.e : '🏋️'}</span>
         <div class="lift-txt"><span class="lift-total">${m.n}<small>${m.u}</small></span>
-        <span class="lift-thing">${reached ? `${esc(reached.name)} ${ratioText(total, reached)}<small>1${reached.u} ${approx(reached)}</small>` : `<small>${THINGS[0].name}(${approx(THINGS[0])})まであと少し</small>`}</span></div>`;
+        <span class="lift-thing">${reached ? `${esc(reached.name)} ${ratioText(total, reached)}` : `<small>${THINGS[0].name}(${approx(THINGS[0])})まであと少し</small>`}</span></div>`;
     } else {
       main = `<span class="emo" aria-hidden="true">${isFuture ? '🗓️' : '🌱'}</span>
         <div class="lift-txt"><span class="lift-total">0<small>kg</small></span>
@@ -1774,22 +1792,43 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       const base = reached ? reached.kg : 0;
       const p = Math.max(2, Math.min(100, (total - base) / (next.kg - base) * 100));
       nextHtml = `<div class="lift-next"><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p)}" aria-label="次の目標までの進み具合"><span style="--p:${p}%"></span></div>
-        <p>次は ${next.e} <b>${esc(next.name)}</b>(${approx(next)})まで あと <b>${massText(next.kg - total)}</b></p></div>`;
+        <p>次は ${next.e} <b>${esc(next.name)}</b> まで あと <b>${massText(next.kg - total)}</b></p></div>`;
     } else if (isCur && !next) {
       nextHtml = `<div class="lift-next"><p>用意した重さをすべて超えました!</p></div>`;
     }
     let cmp = '';
     if (!isFuture && (total > 0 || prev > 0)) {
       const diff = total - prev;
-      const label = isCur ? '先月の同じ時期より' : '前の月より';
-      cmp = `<span>${label} <b>${diff >= 0 ? '+' : '−'}${massText(Math.abs(diff))}</b></span>`;
+      const label = isCur ? '先月の同じ日まで比' : '前月比';
+      cmp = `${label} <b>${diff >= 0 ? '+' : '−'}${massText(Math.abs(diff))}</b>`;
     }
     $('liftCard').innerHTML = `
-      <div class="lift-head"><h3>${isCur ? '今月' : `${calM + 1}月に`}持ち上げた重さ</h3></div>
+      <div class="lift-head"><span>${isCur ? '今月' : `${calM + 1}月に`}持ち上げた重さ</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></div>
       <div class="lift-main">${main}</div>
       ${nextHtml}
-      <div class="lift-foot"><span>トレーニング <b>${trainedDays}</b>日</span><span><b>${sets}</b>セット</span>${cmp}</div>`;
+      <p class="lift-foot">トレーニング <b>${trainedDays}</b>日・<b>${sets}</b>セット${cmp ? '・' + cmp : ''}</p>`;
   }
+
+  function openRates() {
+    const ser = weightSeries();
+    const mk = `${calY}-${pad(calM + 1)}`;
+    const isCur = mk === today().slice(0, 7);
+    const total = monthVolume(mk, ser);
+    const reached = reachedOf(total);
+    const label = isCur ? '今月' : `${calM + 1}月`;
+    openSheet(`
+      <div class="sheet-head"><h2>重さのレート表</h2><button class="del" id="closeS" aria-label="閉じる">${X_ICON}</button></div>
+      <p class="rate-sum"><span>${label}の合計</span><b>${massText(total)}</b></p>
+      <ul class="rate">${THINGS.map(t => {
+        const r = total / t.kg;
+        const cls = [total < t.kg && 'off', reached && t === reached && 'now'].filter(Boolean).join(' ');
+        return `<li class="${cls}"><span class="e" aria-hidden="true">${t.e}</span><span class="nm">${esc(t.name)}</span><span class="kg">${approx(t)}</span><span class="x">${nf(r, r >= 10 ? 0 : 1)}${t.u}</span></li>`;
+      }).join('')}</ul>
+      <p class="rate-legend"><span>カレンダー:</span><span><i class="lg-train"></i>トレーニングした日</span><span><i class="lg-body"></i>体重・メモあり</span><span>下の点=鍛えた部位</span></p>`,
+      s => { s.querySelector('#closeS').onclick = closeSheet; });
+  }
+  $('liftCard').addEventListener('click', openRates);
+  $('liftCard').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRates(); } });
 
   function openDay(k) {
     const d = data.days[k];
