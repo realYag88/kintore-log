@@ -251,7 +251,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .set-h span { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); }
 .set-h i { font-style: normal; font-size: 10px; margin-left: 2px; }
 .set .no { text-align: center; font-family: var(--font-num); font-weight: 800; color: var(--muted); font-size: 14px; }
-.eq-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: -4px; }
+.eq-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -2px 0 -4px; min-height: 34px; }
 .eq-head > span { font-size: 12px; font-weight: 700; color: var(--muted); padding-left: 4px; }
 .seg.sm { padding: 2px; }
 .seg.sm .seg-btn { min-height: 30px; padding: 0 12px; font-size: 12px; }
@@ -259,10 +259,18 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
 .eq { display: flex; align-items: flex-end; gap: 4px; }
 .eq-del { flex: 0 0 28px; height: 46px; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 0; }
 .eq-del svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
-.eq-tools { display: flex; align-items: center; gap: 8px; }
-.assist-btn { width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--surface-2); color: var(--muted); display: grid; place-items: center; padding: 0; }
-.assist-btn svg { width: 21px; height: 21px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.assist-btn[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.eq-tools { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.prev-mini { display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; font-size: 12.5px !important; font-family: var(--font-num), var(--font-ui); }
+.prev-mini .link-btn { font-size: 12.5px; padding: 6px 0; }
+.memo-btn { width: 34px; height: 34px; border-radius: 50%; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 0; flex-shrink: 0; }
+.memo-btn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.memo-btn[aria-pressed="true"] { color: var(--fg); background: var(--surface-2); }
+.eq-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 32px; margin-top: -4px; }
+.mini-add { border: none; background: transparent; padding: 6px 2px; font-weight: 700; font-size: 13px; color: var(--muted); }
+.eq-foot .v2-calc { background: none; padding: 0; margin: 0 2px 0 auto; display: block; font-size: 12.5px; }
+.eq-foot .v2-calc b { font-size: 16px; }
+.wo-head .memo-btn + .confirm-del { margin-left: -4px; }
+.assist-btn svg { width: 21px; height: 21px; }
 .calc-lines { display: flex; flex-direction: column; gap: 2px; }
 .eq-f { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .eq-f > span { font-size: 12px; font-weight: 700; color: var(--muted); text-align: center; white-space: nowrap; }
@@ -1201,6 +1209,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     autoGrow($('dayMemo'));
   }
 
+  const MEMO_ICON = '<svg viewBox="0 0 24 24"><path d="M5 4.5h10l4 4V19a.5.5 0 0 1-.5.5h-13A.5.5 0 0 1 5 19z"/><path d="M8.5 11h7M8.5 14.5h5"/></svg>';
   const HAND = '<svg viewBox="0 0 24 24"><circle cx="12" cy="6.5" r="2.6"/><path d="M3 14.5h3.2l4.6 2.6c.5.3 1.1.3 1.6.1L21 13.6"/><path d="M6.2 14.5v-1.2c0-.6.5-1.1 1.1-1.1h4.9a1.6 1.6 0 0 1 0 3.2H9.4"/></svg>';
   function woCardV2(day, w, wi) {
     ensureRows(w);
@@ -1210,15 +1219,14 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
     el.className = 'card';
     el.style.setProperty('--c', col(w.color));
     const prev = lastRecord(w.menuId, cur);
-    const pv = prev ? v2FromPrev(prev.w) : null;
-    const pvRows = pv ? pv.rows.map(r => fitRow({ ...r }, split, w.bw)) : [];
-    const ph = (v, d) => v != null ? fmtN(v) : d;
+    const ph = () => '';
     const val = v => v != null ? fmtN(v) : '';
     const multi = w.rows.length > 1;
     const assistOpen = !!w.assist || !!w._assistOpen;
+    const memoOpen = !!(w.memo || '').trim() || !!w._memoOpen;
 
     const rowHtml = (r, i) => {
-      const p = pvRows[i] || pvRows[pvRows.length - 1] || {};
+      const p = {};
       const lab = t => i === 0 ? `<span>${t}</span>` : '';
       const n = i + 1;
       const weight = split ? `
@@ -1241,31 +1249,28 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       <div class="wo-head">
         <span class="dot"></span>
         <div class="wo-title"><b>${esc(w.name)}</b><small>${esc(w.cat)}${w.bw ? '・自重' : ''}</small></div>
+        <button class="memo-btn" data-act="memo" aria-pressed="${memoOpen}" aria-label="メモ">${MEMO_ICON}</button>
+        <button class="memo-btn assist-btn" data-act="assist" aria-pressed="${assistOpen}" aria-label="補助">${HAND}</button>
         <button class="confirm-del" data-act="delwo" aria-label="${esc(w.name)}を削除">${X_ICON}</button>
       </div>
-      ${prev ? `<p class="prev"><span>前回 ${shortLabel(prev.key)}:${esc(recordText(prev.w))}</span><button class="link-btn" data-act="copyprev">前回をコピー</button></p>` : ''}
-      <div class="eq-head"><span>重さ</span><div class="eq-tools">
-        <button class="assist-btn" data-act="assist" aria-pressed="${assistOpen}" aria-label="補助">${HAND}</button>
+      ${prev || !w.bw ? `<div class="eq-head"><span class="prev-mini">${prev ? `前回 ${shortLabel(prev.key)}<button class="link-btn" data-act="copyprev">コピー</button>` : ''}</span><div class="eq-tools">
         ${w.bw ? '' : `<div class="seg sm" role="group" aria-label="重さの入力方法"><button class="seg-btn" data-split="1" aria-pressed="${split}">分ける</button><button class="seg-btn" data-split="0" aria-pressed="${!split}">まとめる</button></div>`}
-      </div></div>
+      </div></div>` : ''}
       <div class="eq-rows">${w.rows.map(rowHtml).join('')}</div>
-      <button class="add-set" data-act="addrow">＋ セットを追加</button>
+      <div class="eq-foot"><button class="mini-add" data-act="addrow">＋ セット</button><p class="v2-calc" data-calc hidden></p></div>
       <div class="v2-assist" ${assistOpen ? '' : 'hidden'}>
         <label class="eq-f"><span>補助</span><input class="num-input" data-f="assist" type="text" inputmode="decimal" value="${w.assist ? fmtN(w.assist) : ''}" placeholder="0" aria-label="補助の重さ"></label>
         <small>入れた分は計算から差し引きます</small>
       </div>
-      <p class="v2-calc" data-calc hidden></p>
-      <textarea class="memo" rows="1" placeholder="メモ(フォーム・感覚など)" aria-label="${esc(w.name)}のメモ"></textarea>`;
+      <textarea class="memo" rows="1" placeholder="メモ(フォーム・感覚など)" aria-label="${esc(w.name)}のメモ" ${memoOpen ? '' : 'hidden'}></textarea>`;
 
     const calcEl = el.querySelector('[data-calc]');
     const showCalc = () => {
       const ser = weightSeries();
       if (!filledSets(w).length) { calcEl.hidden = true; return; }
-      const body = w.bw && ser.length ? bodyAt(cur, ser) : 0;
-      const lines = w.rows.filter(r => rowTyped(r, w.bw)).map(r =>
-        `<span>${fmtN(body + rowLoad(r, w.bw))}kg × ${r.reps != null ? fmtN(r.reps) : '0'}回 × ${fmtN(r.setCount || 1)}セット</span>`).join('');
       const noBody = w.bw && !ser.length;
-      calcEl.innerHTML = `<span class="calc-lines">${lines}${w.assist ? `<span>補助 −${fmtN(w.assist)}kg</span>` : ''}</span><b>= ${massText(workoutVolume(w, cur, ser))}</b>${noBody ? '<small>カラダタブで体重を入れると、自重の分も計算に入ります</small>' : ''}`;
+      calcEl.innerHTML = `計 <b>${massText(workoutVolume(w, cur, ser))}</b>`;
+      calcEl.title = noBody ? 'カラダタブで体重を入れると、自重の分も計算に入ります' : '';
       calcEl.hidden = false;
     };
     showCalc();
@@ -1295,9 +1300,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       const last = w.rows[w.rows.length - 1];
       w.rows.push(last ? { ...last } : { base: null, plate: null, reps: null, setCount: 1 });
       syncSets(w); save(); renderLog();
-      const rows = $('workouts').children[wi]?.querySelectorAll('[data-row]');
-      const inp = rows && rows[rows.length - 1].querySelector(split ? '[data-f="plate"]' : '[data-f="plate"]');
-      inp && inp.focus();
     };
     el.querySelectorAll('[data-split]').forEach(b => b.onclick = () => {
       const sp = b.dataset.split === '1';
@@ -1312,6 +1314,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       if (assistOpen) { w.assist = 0; w._assistOpen = false; syncSets(w); save(); renderLog(); return; }
       w._assistOpen = true; renderLog();
       $('workouts').children[wi]?.querySelector('[data-f="assist"]')?.focus();
+    };
+    el.querySelector('[data-act="memo"]').onclick = () => {
+      if (memoOpen && !(w.memo || '').trim()) { w._memoOpen = false; renderLog(); return; }
+      if (memoOpen) { el.querySelector('.memo').focus(); return; }
+      w._memoOpen = true; renderLog();
+      $('workouts').children[wi]?.querySelector('.memo')?.focus();
     };
     const cp = el.querySelector('[data-act="copyprev"]');
     if (cp) cp.onclick = () => {
