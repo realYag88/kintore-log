@@ -1097,21 +1097,17 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   /* ---------- 持ち上げた重さ(重さ × 回数の合計) ---------- */
   // 重さはおおよその目安
   const THINGS = [
-    { e: '🌾', name: '米俵', kg: 60, u: '俵' },
-    { e: '🐼', name: 'ジャイアントパンダ', kg: 100, u: '頭' },
-    { e: '🦁', name: 'ライオン(オス)', kg: 190, u: '頭' },
-    { e: '🎹', name: 'グランドピアノ', kg: 320, u: '台' },
-    { e: '🐻‍❄️', name: 'ホッキョクグマ', kg: 500, u: '頭' },
-    { e: '🐄', name: '乳牛', kg: 650, u: '頭' },
-    { e: '🚗', name: '軽自動車', kg: 900, u: '台' },
     { e: '🦒', name: 'キリン', kg: 1200, u: '頭' },
     { e: '🦛', name: 'カバ', kg: 1500, u: '頭' },
     { e: '🦏', name: 'シロサイ', kg: 2300, u: '頭' },
+    { e: '🐋', name: 'シャチ', kg: 5000, u: '頭' },
     { e: '🐘', name: 'アフリカゾウ', kg: 6000, u: '頭' },
     { e: '🦖', name: 'ティラノサウルス', kg: 8000, u: '体' },
     { e: '🚌', name: '路線バス', kg: 10000, u: '台' },
     { e: '🦈', name: 'ジンベエザメ', kg: 20000, u: '匹' },
     { e: '🐋', name: 'ザトウクジラ', kg: 30000, u: '頭' },
+    { e: '🦕', name: 'ブラキオサウルス', kg: 40000, u: '体' },
+    { e: '🐳', name: 'マッコウクジラ', kg: 55000, u: '頭' },
     { e: '🚂', name: 'D51 蒸気機関車', kg: 78000, u: '両' },
     { e: '🐳', name: 'シロナガスクジラ', kg: 150000, u: '頭' },
     { e: '✈️', name: 'ジャンボジェット', kg: 180000, u: '機' },
@@ -1752,10 +1748,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
   function renderCal() {
     $('calTitle').textContent = `${calY}年${calM + 1}月`;
     const grid = $('calGrid');
-    let html = [...WD].map((w, i) => `<div class="wd${i === 0 ? ' sun' : i === 6 ? ' sat' : ''}">${w}</div>`).join('');
+    // 月曜始まり
+    let html = [...'月火水木金土日'].map((w, i) => `<div class="wd${i === 6 ? ' sun' : i === 5 ? ' sat' : ''}">${w}</div>`).join('');
     const first = new Date(calY, calM, 1);
     const last = new Date(calY, calM + 1, 0).getDate();
-    for (let i = 0; i < first.getDay(); i++) html += '<div aria-hidden="true"></div>';
+    const lead = (first.getDay() + 6) % 7; // 月曜=0
+    for (let i = 0; i < lead; i++) html += '<div aria-hidden="true"></div>';
     const t = today();
     let trainedDays = 0, sets = 0;
     for (let day = 1; day <= last; day++) {
@@ -1770,7 +1768,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       html += `<button class="${cls}" data-k="${k}" aria-label="${label}"><span class="n">${day}</span><span class="dots">${colors.map(c => `<i style="--c:${col(c)}"></i>`).join('')}</span></button>`;
     }
     // 月によって高さが変わらないよう、常に6週(42マス)ぶん作る
-    for (let i = first.getDay() + last; i < 42; i++) html += '<div aria-hidden="true"></div>';
+    for (let i = lead + last; i < 42; i++) html += '<div aria-hidden="true"></div>';
     grid.innerHTML = html;
     grid.querySelectorAll('.cday').forEach(b => b.onclick = () => openDay(b.dataset.k));
     renderLift(trainedDays, sets);
@@ -1845,7 +1843,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, .date-pick:fo
       <ul class="rate">${THINGS.map(t => {
         const r = total / t.kg;
         const cls = [total < t.kg && 'off', reached && t === reached && 'now'].filter(Boolean).join(' ');
-        return `<li class="${cls}"><span class="e" aria-hidden="true">${t.e}</span><span class="nm">${esc(t.name)}</span><span class="kg">${approx(t)}</span><span class="x">${nf(r, r >= 10 ? 0 : 1)}${t.u}</span></li>`;
+        return `<li class="${cls}"><span class="e" aria-hidden="true">${t.e}</span><span class="nm">${esc(t.name)}</span><span class="kg">${approx(t)}</span><span class="x">${r < 0.1 ? '—' : nf(r, r >= 10 ? 0 : 1) + t.u}</span></li>`;
       }).join('')}</ul>`,
       s => { s.querySelector('#closeS').onclick = closeSheet; });
   }
